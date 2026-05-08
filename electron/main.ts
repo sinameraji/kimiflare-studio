@@ -16,13 +16,12 @@ const createWindow = () => {
   })
 
   // In development, load from Vite dev server
-  if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
-    mainWindow.webContents.openDevTools()
-  } else {
-    // In production, load the built files
+  const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173'
+  mainWindow.loadURL(devUrl).catch(() => {
+    // Fallback to built files if dev server isn't running
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
-  }
+  })
+  mainWindow.webContents.openDevTools()
 }
 
 app.whenReady().then(() => {
