@@ -9,8 +9,8 @@
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
 
   ::-webkit-scrollbar-track {
@@ -18,25 +18,25 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #1E2538;
+    background: #D4CFC7;
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #334155;
+    background: #B5AFA6;
   }
 }
 
 @layer components {
   .panel {
-    @apply bg-studio-surface rounded-lg border border-studio-elevated/50;
+    @apply bg-studio-surface rounded-xl border border-studio-elevated;
   }
 
   .panel-header {
-    @apply px-4 py-3 border-b border-studio-elevated/50 flex items-center justify-between;
+    @apply px-4 py-3 border-b border-studio-elevated flex items-center justify-between;
   }
 
   .text-label {
-    @apply text-xs font-medium uppercase tracking-wider text-studio-text-secondary;
+    @apply text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary;
   }
 }

@@ -13,9 +13,6 @@ import {
   Zap,
   Activity,
   Lock,
-  ArrowRight,
-  Server,
-  Cpu,
 } from 'lucide-react'
 import { sampleMission, samplePlan, sampleActivity } from '../data/sample.ts'
 
@@ -35,7 +32,7 @@ const riskIcons: Record<string, React.ReactNode> = {
 function CollapsibleSection({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div className="py-4 border-t border-studio-elevated/30">
+    <div className="py-4 border-t border-studio-elevated">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between group"
@@ -66,7 +63,7 @@ export default function CenterStage() {
         <div className="flex items-baseline justify-between mb-1">
           <div className="flex items-center gap-3">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary">Mission</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-studio-warning/10 text-studio-warning">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-studio-warning-light text-studio-warning border border-studio-warning/20">
               Pending Approval
             </span>
           </div>
@@ -84,7 +81,7 @@ export default function CenterStage() {
         <h2 className="text-xl font-semibold text-studio-text tracking-tight">{sampleMission.title}</h2>
 
         {/* Phase Tabs */}
-        <div className="flex items-center gap-6 mt-6 border-b border-studio-elevated/30">
+        <div className="flex items-center gap-6 mt-6 border-b border-studio-elevated">
           {phases.map((phase) => {
             const Icon = phase.icon
             const isActive = phase.id === activePhase
@@ -110,12 +107,12 @@ export default function CenterStage() {
       <div className="flex-1 overflow-y-auto px-8 pb-8">
         {activePhase === 'plan' && (
           <div className="max-w-2xl">
-            {/* Primary: Risk Summary — the thing that needs attention */}
+            {/* Primary: Risk Summary */}
             <div className="py-5">
               <div className="flex items-center gap-2 mb-3">
                 <AlertTriangle className="w-4 h-4 text-studio-warning" />
                 <span className="text-sm font-medium text-studio-text">Risk Assessment</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-studio-critical/10 text-studio-critical font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-studio-critical-light text-studio-critical font-medium">
                   1 high, 1 medium
                 </span>
               </div>
@@ -147,8 +144,8 @@ export default function CenterStage() {
               </div>
             </div>
 
-            {/* Primary: Cost — quick scan */}
-            <div className="py-4 border-t border-studio-elevated/30">
+            {/* Primary: Cost */}
+            <div className="py-4 border-t border-studio-elevated">
               <div className="flex items-center gap-2 mb-2">
                 <DollarSign className="w-4 h-4 text-studio-cost" />
                 <span className="text-sm font-medium text-studio-text">Cost Projection</span>
@@ -169,14 +166,14 @@ export default function CenterStage() {
               </div>
             </div>
 
-            {/* Secondary: Approach — collapsible */}
+            {/* Secondary: Approach */}
             <CollapsibleSection title="Approach" defaultOpen={false}>
               <p className="text-sm text-studio-text-secondary leading-relaxed">
                 {samplePlan.approach}
               </p>
             </CollapsibleSection>
 
-            {/* Secondary: Architecture Delta — collapsible */}
+            {/* Secondary: Architecture Delta */}
             <CollapsibleSection title="Architecture Delta" defaultOpen={false}>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -194,7 +191,7 @@ export default function CenterStage() {
               </div>
             </CollapsibleSection>
 
-            {/* Secondary: Alternatives — collapsible */}
+            {/* Secondary: Alternatives */}
             <CollapsibleSection title="Alternatives" defaultOpen={false}>
               <div className="space-y-2">
                 {samplePlan.alternatives.map((alt, i) => (
@@ -204,14 +201,14 @@ export default function CenterStage() {
                     className={`w-full text-left p-3 rounded-lg border transition-all ${
                       selectedAlt === i
                         ? 'border-studio-primary/40 bg-studio-primary/5'
-                        : 'border-studio-elevated/30 hover:border-studio-elevated/60'
+                        : 'border-studio-elevated hover:border-studio-elevated-hover'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       {selectedAlt === i && <div className="w-1.5 h-1.5 rounded-full bg-studio-primary" />}
                       <span className="text-xs font-medium text-studio-text">{alt.name}</span>
                       {i === 2 && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-studio-success/10 text-studio-success">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-studio-success-light text-studio-success">
                           Recommended
                         </span>
                       )}
@@ -224,8 +221,8 @@ export default function CenterStage() {
               </div>
             </CollapsibleSection>
 
-            {/* Primary: Approval — the focal point */}
-            <div className="mt-6 p-5 rounded-xl bg-studio-elevated/30 border border-studio-elevated/50">
+            {/* Primary: Approval */}
+            <div className="mt-6 p-5 rounded-xl bg-studio-surface border border-studio-elevated">
               <div className="flex items-center gap-2 mb-4">
                 <Lock className="w-4 h-4 text-studio-primary" />
                 <span className="text-sm font-medium text-studio-text">Approval</span>
@@ -243,7 +240,7 @@ export default function CenterStage() {
                   max="100"
                   value={approvalLevel}
                   onChange={(e) => setApprovalLevel(Number(e.target.value))}
-                  className="w-full h-1.5 bg-studio-bg rounded-full appearance-none cursor-pointer accent-studio-primary"
+                  className="w-full h-1.5 bg-studio-elevated rounded-full appearance-none cursor-pointer accent-studio-primary"
                 />
                 <p className={`text-xs text-center mt-3 font-medium ${
                   approvalLevel < 33 ? 'text-studio-critical' :
@@ -257,10 +254,10 @@ export default function CenterStage() {
               </div>
 
               <div className="flex gap-3">
-                <button className="flex-1 py-2 rounded-lg bg-studio-bg text-studio-text-secondary text-xs font-medium hover:text-studio-text transition-colors">
+                <button className="flex-1 py-2 rounded-lg bg-studio-bg text-studio-text-secondary text-xs font-medium hover:text-studio-text transition-colors border border-studio-elevated">
                   Request Changes
                 </button>
-                <button className="flex-1 py-2 rounded-lg bg-studio-primary text-white text-xs font-medium hover:bg-studio-primary/90 transition-colors">
+                <button className="flex-1 py-2 rounded-lg bg-studio-primary text-white text-xs font-medium hover:bg-studio-primary-light transition-colors">
                   Execute Plan
                 </button>
               </div>
@@ -274,7 +271,7 @@ export default function CenterStage() {
               <div>
                 <label className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-2">Goal</label>
                 <textarea
-                  className="w-full h-24 bg-studio-elevated/30 rounded-lg p-3 text-sm text-studio-text placeholder-studio-text-tertiary focus:outline-none focus:ring-1 focus:ring-studio-primary/50 resize-none border border-studio-elevated/30"
+                  className="w-full h-24 bg-studio-surface rounded-lg p-3 text-sm text-studio-text placeholder-studio-text-tertiary focus:outline-none focus:ring-1 focus:ring-studio-primary/50 resize-none border border-studio-elevated"
                   placeholder="What do you want to build or change?"
                   defaultValue="Refactor the authentication middleware from session-based to JWT with Redis-backed revocation"
                 />
@@ -282,7 +279,7 @@ export default function CenterStage() {
               <div>
                 <label className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-2">Constraints</label>
                 <textarea
-                  className="w-full h-20 bg-studio-elevated/30 rounded-lg p-3 text-sm text-studio-text placeholder-studio-text-tertiary focus:outline-none focus:ring-1 focus:ring-studio-primary/50 resize-none border border-studio-elevated/30"
+                  className="w-full h-20 bg-studio-surface rounded-lg p-3 text-sm text-studio-text placeholder-studio-text-tertiary focus:outline-none focus:ring-1 focus:ring-studio-primary/50 resize-none border border-studio-elevated"
                   placeholder="Non-negotiables..."
                   defaultValue="Must maintain backward compatibility during migration. No downtime allowed. Budget under $100/mo additional infra."
                 />
@@ -290,7 +287,7 @@ export default function CenterStage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-2">Confidence</label>
-                  <select className="w-full bg-studio-elevated/30 rounded-lg p-2.5 text-sm text-studio-text focus:outline-none focus:ring-1 focus:ring-studio-primary/50 border border-studio-elevated/30">
+                  <select className="w-full bg-studio-surface rounded-lg p-2.5 text-sm text-studio-text focus:outline-none focus:ring-1 focus:ring-studio-primary/50 border border-studio-elevated">
                     <option>Explore — Research and report</option>
                     <option selected>Execute — Build and ship</option>
                     <option>Emergency Fix — Minimal review</option>
@@ -298,14 +295,14 @@ export default function CenterStage() {
                 </div>
                 <div>
                   <label className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-2">Scope</label>
-                  <select className="w-full bg-studio-elevated/30 rounded-lg p-2.5 text-sm text-studio-text focus:outline-none focus:ring-1 focus:ring-studio-primary/50 border border-studio-elevated/30">
+                  <select className="w-full bg-studio-surface rounded-lg p-2.5 text-sm text-studio-text focus:outline-none focus:ring-1 focus:ring-studio-primary/50 border border-studio-elevated">
                     <option>Auth module only</option>
                     <option selected>Auth + User API</option>
                     <option>Full codebase</option>
                   </select>
                 </div>
               </div>
-              <button className="w-full py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary/90 transition-colors">
+              <button className="w-full py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors">
                 Generate Plan
               </button>
             </div>
@@ -343,7 +340,7 @@ export default function CenterStage() {
 
         {activePhase === 'verify' && (
           <div className="max-w-xl mt-8 text-center">
-            <div className="w-12 h-12 rounded-full bg-studio-success/10 flex items-center justify-center mx-auto mb-4">
+            <div className="w-12 h-12 rounded-full bg-studio-success-light flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 className="w-6 h-6 text-studio-success" />
             </div>
             <h3 className="text-lg font-semibold text-studio-text mb-1">Mission Complete</h3>

@@ -30,7 +30,7 @@ export default function LeftRail() {
   const [projectOpen, setProjectOpen] = useState(true)
 
   return (
-    <aside className="w-56 bg-studio-surface/50 flex flex-col h-full">
+    <aside className="w-56 bg-studio-surface flex flex-col h-full border-r border-studio-elevated">
       {/* Header */}
       <div className="px-4 py-4">
         <div className="flex items-center gap-2.5">
@@ -51,21 +51,21 @@ export default function LeftRail() {
             onClick={() => setProjectOpen(!projectOpen)}
             className="w-full flex items-center justify-between px-2 py-1 mb-1"
           >
-            <span className="text-[10px] font-medium uppercase tracking-widest text-studio-text-tertiary">Project</span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary">Project</span>
             <ChevronDown className={`w-3 h-3 text-studio-text-tertiary transition-transform ${projectOpen ? '' : '-rotate-90'}`} />
           </button>
           {projectOpen && (
             <div className="space-y-0.5">
-              <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md bg-studio-elevated/40 text-studio-text text-xs">
+              <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md bg-studio-elevated text-studio-text text-xs">
                 <FolderGit2 className="w-3.5 h-3.5 text-studio-primary" />
                 <span className="flex-1 text-left">api-gateway-v2</span>
                 <Radio className="w-2.5 h-2.5 text-studio-success" />
               </button>
-              <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-studio-elevated/20 text-studio-text-secondary text-xs transition-colors">
+              <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-studio-elevated text-studio-text-secondary text-xs transition-colors">
                 <FolderGit2 className="w-3.5 h-3.5 text-studio-text-tertiary" />
                 <span className="flex-1 text-left">kimiflare-core</span>
               </button>
-              <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-studio-elevated/20 text-studio-text-tertiary text-xs transition-colors">
+              <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-studio-elevated text-studio-text-tertiary text-xs transition-colors">
                 <Plus className="w-3.5 h-3.5" />
                 <span className="flex-1 text-left">Add project</span>
               </button>
@@ -75,12 +75,12 @@ export default function LeftRail() {
 
         {/* Agent Cabinet — compact */}
         <div className="mb-5">
-          <span className="text-[10px] font-medium uppercase tracking-widest text-studio-text-tertiary px-2">Agents</span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary px-2">Agents</span>
           <div className="mt-1.5 space-y-0.5">
             {sampleAgents.map((agent) => (
               <div
                 key={agent.id}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-studio-elevated/20 transition-colors cursor-pointer group"
+                className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-studio-elevated transition-colors cursor-pointer group"
               >
                 <div className={`w-1.5 h-1.5 rounded-full ${statusColors[agent.status]} ${agent.status !== 'idle' ? 'animate-pulse' : ''}`} />
                 <div className="text-studio-text-tertiary group-hover:text-studio-text-secondary transition-colors">
@@ -96,13 +96,13 @@ export default function LeftRail() {
 
         {/* Risk Radar — minimal */}
         <div className="mb-5">
-          <span className="text-[10px] font-medium uppercase tracking-widest text-studio-text-tertiary px-2">Risk</span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary px-2">Risk</span>
           <div className="mt-2 px-2 space-y-2">
             {Object.entries(sampleRiskRadar).map(([key, data]) => (
               <div key={key} className="flex items-center justify-between">
                 <span className="text-[11px] text-studio-text-secondary capitalize">{key}</span>
                 <div className="flex items-center gap-1.5">
-                  <div className={`w-16 h-1 rounded-full overflow-hidden bg-studio-elevated/60`}>
+                  <div className="w-16 h-1 rounded-full overflow-hidden bg-studio-elevated">
                     <div
                       className={`h-full rounded-full ${
                         data.score >= 80 ? 'bg-studio-success' :
@@ -127,7 +127,7 @@ export default function LeftRail() {
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3">
+      <div className="px-4 py-3 border-t border-studio-elevated">
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-studio-success" />
           <span className="text-[11px] text-studio-text-tertiary">Kimi-K2.6</span>

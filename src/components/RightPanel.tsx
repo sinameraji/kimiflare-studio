@@ -11,56 +11,51 @@ import {
 import { sampleDecisions, sampleMission } from '../data/sample.ts'
 
 const reversibilityColors: Record<string, string> = {
-  Easy: 'text-studio-success bg-studio-success/10',
-  Medium: 'text-studio-warning bg-studio-warning/10',
-  Hard: 'text-studio-critical bg-studio-critical/10',
+  Easy: 'text-studio-success',
+  Medium: 'text-studio-warning',
+  Hard: 'text-studio-critical',
 }
 
 export default function RightPanel() {
   const [decisionsOpen, setDecisionsOpen] = useState(true)
   const [costOpen, setCostOpen] = useState(true)
-  const [diagramOpen, setDiagramOpen] = useState(true)
+  const [diagramOpen, setDiagramOpen] = useState(false)
 
   return (
-    <aside className="w-80 bg-studio-surface border-l border-studio-elevated/50 flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto">
+    <aside className="w-72 bg-studio-surface flex flex-col h-full border-l border-studio-elevated">
+      <div className="flex-1 overflow-y-auto px-4">
         {/* Decision Journal */}
-        <div className="border-b border-studio-elevated/50">
+        <div className="pt-5 pb-4">
           <button
             onClick={() => setDecisionsOpen(!decisionsOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 hover:bg-studio-elevated/30 transition-colors"
+            className="w-full flex items-center justify-between mb-3"
           >
             <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-studio-decision" />
-              <span className="text-sm font-medium text-studio-text">Decision Journal</span>
+              <BookOpen className="w-3.5 h-3.5 text-studio-decision" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary">Decisions</span>
             </div>
             {decisionsOpen ? (
-              <ChevronUp className="w-3.5 h-3.5 text-studio-text-secondary" />
+              <ChevronUp className="w-3 h-3 text-studio-text-tertiary" />
             ) : (
-              <ChevronDown className="w-3.5 h-3.5 text-studio-text-secondary" />
+              <ChevronDown className="w-3 h-3 text-studio-text-tertiary" />
             )}
           </button>
           {decisionsOpen && (
-            <div className="px-4 pb-4 space-y-3">
+            <div className="space-y-3">
               {sampleDecisions.map((decision) => (
-                <div
-                  key={decision.id}
-                  className="p-3 rounded-lg bg-studio-bg border border-studio-elevated/30 hover:border-studio-decision/30 transition-colors"
-                >
-                  <div className="flex items-start gap-2 mb-2">
-                    <div className="w-1 h-full min-h-[20px] rounded-full bg-studio-decision" />
-                    <p className="text-sm text-studio-text font-medium leading-snug">
-                      {decision.decision}
-                    </p>
-                  </div>
-                  <p className="text-xs text-studio-text-secondary mb-2 pl-3">
-                    {decision.rationale}
-                  </p>
-                  <div className="flex items-center gap-2 pl-3">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${reversibilityColors[decision.reversibility]}`}>
-                      {decision.reversibility} to reverse
-                    </span>
-                    <span className="text-[10px] text-studio-text-tertiary">{decision.agent}</span>
+                <div key={decision.id} className="group">
+                  <div className="flex items-start gap-2">
+                    <div className="w-0.5 h-full min-h-[16px] rounded-full bg-studio-decision/60 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-studio-text leading-snug">{decision.decision}</p>
+                      <p className="text-[11px] text-studio-text-secondary mt-0.5 leading-relaxed">{decision.rationale}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className={`text-[10px] font-medium ${reversibilityColors[decision.reversibility]}`}>
+                          {decision.reversibility}
+                        </span>
+                        <span className="text-[10px] text-studio-text-tertiary">{decision.agent}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -69,127 +64,81 @@ export default function RightPanel() {
         </div>
 
         {/* Cost Tracker */}
-        <div className="border-b border-studio-elevated/50">
+        <div className="py-4 border-t border-studio-elevated">
           <button
             onClick={() => setCostOpen(!costOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 hover:bg-studio-elevated/30 transition-colors"
+            className="w-full flex items-center justify-between mb-3"
           >
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-studio-cost" />
-              <span className="text-sm font-medium text-studio-text">Cost Tracker</span>
+              <DollarSign className="w-3.5 h-3.5 text-studio-cost" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary">Cost</span>
             </div>
             {costOpen ? (
-              <ChevronUp className="w-3.5 h-3.5 text-studio-text-secondary" />
+              <ChevronUp className="w-3 h-3 text-studio-text-tertiary" />
             ) : (
-              <ChevronDown className="w-3.5 h-3.5 text-studio-text-secondary" />
+              <ChevronDown className="w-3 h-3 text-studio-text-tertiary" />
             )}
           </button>
           {costOpen && (
-            <div className="px-4 pb-4">
-              <div className="p-4 rounded-lg bg-studio-bg border border-studio-elevated/30">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs text-studio-text-secondary">Session Total</span>
-                  <span className="text-lg font-semibold text-studio-cost">${sampleMission.actualCost.toFixed(2)}</span>
-                </div>
-                <div className="h-1.5 bg-studio-elevated rounded-full overflow-hidden mb-3">
-                  <div
-                    className="h-full bg-studio-cost rounded-full"
-                    style={{ width: '0%' }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-studio-text-tertiary">Estimated: {sampleMission.estimatedCost}</span>
-                  <span className="text-studio-text-tertiary">Budget: $50.00</span>
-                </div>
-                <div className="mt-3 pt-3 border-t border-studio-elevated/30 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-studio-text-secondary">Planning phase</span>
-                    <span className="text-studio-text">$0.00</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-studio-text-secondary">Execution</span>
-                    <span className="text-studio-text">$0.00</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-studio-text-secondary">Verification</span>
-                    <span className="text-studio-text">$0.00</span>
-                  </div>
-                </div>
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-[11px] text-studio-text-secondary">Session</span>
+                <span className="text-lg font-semibold text-studio-cost">${sampleMission.actualCost.toFixed(2)}</span>
+              </div>
+              <div className="h-1 bg-studio-elevated rounded-full overflow-hidden mb-2">
+                <div className="h-full bg-studio-cost rounded-full" style={{ width: '0%' }} />
+              </div>
+              <div className="flex justify-between text-[10px] text-studio-text-tertiary">
+                <span>Est. ${sampleMission.estimatedCost}</span>
+                <span>Budget $50</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* System Diagram Mini */}
-        <div className="border-b border-studio-elevated/50">
+        {/* System Diagram */}
+        <div className="py-4 border-t border-studio-elevated">
           <button
             onClick={() => setDiagramOpen(!diagramOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 hover:bg-studio-elevated/30 transition-colors"
+            className="w-full flex items-center justify-between mb-3"
           >
             <div className="flex items-center gap-2">
-              <GitBranch className="w-4 h-4 text-studio-info" />
-              <span className="text-sm font-medium text-studio-text">System Diagram</span>
+              <GitBranch className="w-3.5 h-3.5 text-studio-info" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary">Diagram</span>
             </div>
             {diagramOpen ? (
-              <ChevronUp className="w-3.5 h-3.5 text-studio-text-secondary" />
+              <ChevronUp className="w-3 h-3 text-studio-text-tertiary" />
             ) : (
-              <ChevronDown className="w-3.5 h-3.5 text-studio-text-secondary" />
+              <ChevronDown className="w-3 h-3 text-studio-text-tertiary" />
             )}
           </button>
           {diagramOpen && (
-            <div className="px-4 pb-4">
-              <div className="p-4 rounded-lg bg-studio-bg border border-studio-elevated/30">
-                {/* Simple SVG diagram */}
-                <svg viewBox="0 0 280 180" className="w-full">
-                  {/* Load Balancer */}
-                  <rect x="100" y="10" width="80" height="30" rx="4" fill="#1E2538" stroke="#4F46E5" strokeWidth="1.5" />
-                  <text x="140" y="30" textAnchor="middle" fill="#F1F5F9" fontSize="10" fontFamily="Inter">Load Balancer</text>
-
-                  {/* App Server */}
-                  <rect x="100" y="70" width="80" height="30" rx="4" fill="#1E2538" stroke="#4F46E5" strokeWidth="1.5" />
-                  <text x="140" y="90" textAnchor="middle" fill="#F1F5F9" fontSize="10" fontFamily="Inter">App Server</text>
-
-                  {/* Redis */}
-                  <rect x="30" y="130" width="70" height="30" rx="4" fill="#1E2538" stroke="#06B6D4" strokeWidth="1.5" strokeDasharray="4 2" />
-                  <text x="65" y="150" textAnchor="middle" fill="#06B6D4" fontSize="10" fontFamily="Inter">Redis</text>
-
-                  {/* PostgreSQL */}
-                  <rect x="180" y="130" width="70" height="30" rx="4" fill="#1E2538" stroke="#64748B" strokeWidth="1.5" />
-                  <text x="215" y="150" textAnchor="middle" fill="#94A3B8" fontSize="10" fontFamily="Inter">PostgreSQL</text>
-
-                  {/* Connections */}
-                  <line x1="140" y1="40" x2="140" y2="70" stroke="#4F46E5" strokeWidth="1.5" />
-                  <line x1="120" y1="100" x2="80" y2="130" stroke="#06B6D4" strokeWidth="1.5" strokeDasharray="4 2" />
-                  <line x1="160" y1="100" x2="200" y2="130" stroke="#64748B" strokeWidth="1.5" />
-
-                  {/* Labels */}
-                  <text x="145" y="58" fill="#4F46E5" fontSize="8" fontFamily="Inter">HTTP</text>
-                  <text x="85" y="118" fill="#06B6D4" fontSize="8" fontFamily="Inter">new</text>
-                  <text x="185" y="118" fill="#64748B" fontSize="8" fontFamily="Inter">existing</text>
-                </svg>
-                <div className="flex items-center gap-3 mt-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-studio-primary" />
-                    <span className="text-studio-text-secondary">Existing</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-studio-info" />
-                    <span className="text-studio-text-secondary">New</span>
-                  </div>
-                </div>
-              </div>
+            <div className="p-3 rounded-lg bg-studio-bg border border-studio-elevated">
+              <svg viewBox="0 0 240 140" className="w-full">
+                <rect x="80" y="8" width="80" height="24" rx="3" fill="#FAF8F5" stroke="#8B7355" strokeWidth="1" />
+                <text x="120" y="24" textAnchor="middle" fill="#6B6560" fontSize="9" fontFamily="Inter">Load Balancer</text>
+                <rect x="80" y="58" width="80" height="24" rx="3" fill="#FAF8F5" stroke="#8B7355" strokeWidth="1" />
+                <text x="120" y="74" textAnchor="middle" fill="#6B6560" fontSize="9" fontFamily="Inter">App Server</text>
+                <rect x="20" y="108" width="60" height="24" rx="3" fill="#FAF8F5" stroke="#6A8FA6" strokeWidth="1" strokeDasharray="3 2" />
+                <text x="50" y="124" textAnchor="middle" fill="#6A8FA6" fontSize="9" fontFamily="Inter">Redis</text>
+                <rect x="160" y="108" width="60" height="24" rx="3" fill="#FAF8F5" stroke="#A8A29A" strokeWidth="1" />
+                <text x="190" y="124" textAnchor="middle" fill="#A8A29A" fontSize="9" fontFamily="Inter">PostgreSQL</text>
+                <line x1="120" y1="32" x2="120" y2="58" stroke="#8B7355" strokeWidth="1" />
+                <line x1="105" y1="82" x2="65" y2="108" stroke="#6A8FA6" strokeWidth="1" strokeDasharray="3 2" />
+                <line x1="135" y1="82" x2="175" y2="108" stroke="#A8A29A" strokeWidth="1" />
+              </svg>
             </div>
           )}
         </div>
 
         {/* Quick Actions */}
-        <div className="px-4 py-4 space-y-2">
-          <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-studio-elevated/30 hover:bg-studio-elevated/50 text-studio-text-secondary hover:text-studio-text text-sm transition-colors">
-            <RotateCcw className="w-4 h-4" />
-            Rollback Session
+        <div className="py-4 border-t border-studio-elevated space-y-1">
+          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-studio-elevated text-studio-text-secondary hover:text-studio-text text-xs transition-colors">
+            <RotateCcw className="w-3.5 h-3.5" />
+            Rollback
           </button>
-          <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-studio-elevated/30 hover:bg-studio-elevated/50 text-studio-text-secondary hover:text-studio-text text-sm transition-colors">
-            <AlertCircle className="w-4 h-4" />
+          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-studio-elevated text-studio-text-secondary hover:text-studio-text text-xs transition-colors">
+            <AlertCircle className="w-3.5 h-3.5" />
             Report Issue
           </button>
         </div>
