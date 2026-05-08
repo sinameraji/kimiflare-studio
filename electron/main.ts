@@ -1,6 +1,8 @@
 import { app, BrowserWindow } from 'electron'
 import path from 'node:path'
 
+const isDev = !app.isPackaged
+
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 1440,
@@ -15,13 +17,13 @@ const createWindow = () => {
     },
   })
 
-  // In development, load from Vite dev server
-  const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173'
-  mainWindow.loadURL(devUrl).catch(() => {
-    // Fallback to built files if dev server isn't running
+  if (isDev) {
+    const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173'
+    mainWindow.loadURL(devUrl)
+    mainWindow.webContents.openDevTools()
+  } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
-  })
-  mainWindow.webContents.openDevTools()
+  }
 }
 
 app.whenReady().then(() => {
