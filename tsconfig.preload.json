@@ -5,11 +5,11 @@
     "noEmit": false,
     "allowImportingTsExtensions": false,
     "lib": ["ES2022"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
     "jsx": "preserve",
     "strict": true
   },
-  "include": ["electron", "src/types/harness.ts"],
-  "exclude": ["electron/preload.ts"]
+  "include": ["electron/preload.ts", "src/types/harness.ts"]
 }
