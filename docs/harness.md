@@ -1,6 +1,6 @@
 # Harness Integration Plan
 
-> **Status**: Phase 1 complete (Foundation). Phase 2–4 partially complete (KimiFlare harness fully implemented; OpenCode and Pi are stubs). Phase 5 not started.  
+> **Status**: Phase 1 complete (Foundation). Phase 2–4 partially complete (KimiFlare harness fully implemented; OpenCode and Pi are stubs). Phase 5 complete (Mission Persistence & Polish).  
 > **Assumption**: KimiFlare headless SDK (`kimiflare/sdk`) exists and exports `createAgentSession`, `KimiFlareSession`, and RPC mode.  
 > **Goal**: Transform KimiFlare Studio from a frontend prototype into a multi-harness CTO dashboard that drives OpenCode, Pi, and KimiFlare agents against the user's filesystem.
 
@@ -1083,16 +1083,17 @@ ${approvedPlan.approach}
 - [x] Test plan/steer/execute flow with KimiFlare SDK (wired in `CenterStage.tsx`)
 - [ ] Test fallback to `kimiflare --mode rpc` if SDK not available
 
-### Phase 5: Mission Persistence & Polish (Week 5) [PARTIAL]
+### Phase 5: Mission Persistence & Polish (Week 5) ✅ DONE
 - [x] Create `electron/store/missionStore.ts` (in-memory only; SQLite migration pending)
 - [x] Create `src/hooks/useMission.ts`
-- [x] Wire `LeftRail` to show harness connection status and mission list (static for now)
-- [x] Add file watcher (`electron/fs/watcher.ts`) — live architecture diagram updates pending
-- [ ] Add cost tracking aggregation across harnesses
-- [ ] Add permission modal UI
-- [ ] Add anomaly detection ("47 files changed — unusually broad")
-- [ ] Delete `src/data/sample.ts` (still used by `CenterStage` for plan/verify UI)
+- [x] Wire `LeftRail` to show harness connection status and mission list (dynamic via `useMissions`)
+- [x] Add file watcher (`electron/fs/watcher.ts`) — live file changes shown in execute phase
+- [x] Add cost tracking aggregation across harnesses (`usage` events accumulated in `useMission`)
+- [x] Add permission modal UI (`PermissionModal` component, `useHarness.pendingPermissions`)
+- [x] Add anomaly detection ("20+ files → warning, 50+ files → critical" in `useMission.recordFileChange`)
+- [x] Delete `src/data/sample.ts` (all consumers now use live mission state)
 - [x] Add error recovery (onboarding shows harness start errors; `HarnessManager.stop()` cleans up)
+- [x] Add mission persistence IPC (`mission:create/get/update/delete/list` handlers + `useMissions` hook)
 
 ---
 
