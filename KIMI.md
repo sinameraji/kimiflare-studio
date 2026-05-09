@@ -38,7 +38,7 @@
 |------------------|-----------|
 | `src/` | Renderer process code (React app). Strict TypeScript, no emit. |
 | `src/components/` | React components — one file per major UI region (LeftRail, CenterStage, WelcomeScreen, etc.). |
-| `src/data/sample.ts` | Static mock data for the prototype. All components read from here until a backend is wired. |
+| `src/data/` | (Removed) Mock data replaced by live mission state via `useMission` / `useMissions` hooks. |
 | `src/utils/` | Small pure helpers (e.g., `exportImage.ts` for clipboard image generation). |
 | `src/main.tsx` | Renderer entry point. Mounts `<App />` into `#root` with `StrictMode`. |
 | `src/index.css` | Global styles + Tailwind directives + custom scrollbar styling. |
@@ -57,7 +57,7 @@
 
 ### Naming
 - **Components**: PascalCase files (`CenterStage.tsx`), default-export functions.
-- **Data/constants**: camelCase, named exports (`sampleMission`, `samplePlan`).
+- **Data/constants**: camelCase, named exports (`buildPlanPrompt`, `buildExecutePrompt`).
 - **CSS classes**: Tailwind utility-first; custom colors use `studio-*` prefix defined in `tailwind.config.js`.
 
 ### Imports
@@ -131,6 +131,6 @@
   - **Renderer** (`src/`): React SPA. No Node.js APIs exposed directly.
   - **Preload** (`electron/preload.ts`): Minimal `contextBridge` exposing safe IPC helpers.
 - **State**: Local React state (`useState`) only. No Redux, Zustand, or context providers yet.
-- **Data flow**: Components import mock data from `src/data/sample.ts`. No API client exists.
+- **Data flow**: Components read live mission state from `useMission` / `useMissions` hooks, which sync bidirectionally with `missionStore` (SQLite via IPC). Harness events flow through `useHarness` → `useMission.processEvent`. File changes are watched via `electron/fs/watcher.ts`.
 - **UI layout**: "Mission Control" — LeftRail (mission queue), CenterStage (mission lifecycle with intent/plan/execute/verify phases), WelcomeScreen (landing).
 - **Future IPC**: `window.electronAPI.sendMessage` / `onMessage` are wired but unused. Extend `preload.ts` and add `ipcMain` handlers in `main.ts` when needed.
