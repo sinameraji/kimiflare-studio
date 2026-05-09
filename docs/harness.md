@@ -912,29 +912,44 @@ export function useHarness() {
 
 ### 10.2 `useMission()`
 
+Bidirectional sync between React state and `missionStore` (SQLite). Loads the mission on mount; debounces writes (500 ms) back to the store on every change.
+
 ```typescript
 // src/hooks/useMission.ts
 
-import { useState, useCallback } from 'react';
-
-export function useMission(missionId: string) {
+export function useMission(missionId: string | null) {
   const [mission, setMission] = useState<Mission | null>(null);
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
 
-  const updatePhase = useCallback((phase: Mission['phase']) => {
-    // Persist to missionStore via IPC
-  }, []);
+  // Load from store on mount; create default if missing
+  useEffect(() => { … }, [missionId]);
 
-  const appendActivity = useCallback((item: ActivityItem) => {
-    // ...
-  }, []);
+  // Debounced sync to missionStore
+  useEffect(() => { … }, [mission]);
 
-  const updatePlan = useCallback((plan: PlanData) => {
-    // ...
-  }, []);
+  const updatePhase = useCallback((phase) => { … }, []);
+  const updateStatus = useCallback((status) => { … }, []);
+  const setTitle = useCallback((title) => { … }, []);
+  const setIntent = useCallback((intent) => { … }, []);
+  const updatePlan = useCallback((plan) => { … }, []);
+  const appendActivity = useCallback((item) => { … }, []);
+  const accumulatePlanDelta = useCallback((text) => { … }, []);
+  const parsePlan = useCallback(() => { … }, []);
+  const recordFileChange = useCallback((path, type) => { … }, []);
+  const processEvent = useCallback((event: HarnessEvent) => { … }, []);
 
-  return { mission, updatePhase, appendActivity, updatePlan };
+  return {
+    mission, anomalies,
+    updatePhase, updateStatus, setTitle, setIntent,
+    updatePlan, appendActivity, accumulatePlanDelta, parsePlan,
+    recordFileChange, processEvent, setMission,
+  };
 }
 ```
+
+**Anomaly detection** (`recordFileChange`): when the count of unique touched files hits 20 or 50, an anomaly is pushed to `anomalies[]` with severity `warning` / `critical`.
+
+**Plan parsing** (`parsePlanFromText`): extracts Approach, Risks, Cost Projection and Alternatives from free-text harness output using regex heuristics.
 
 ---
 
@@ -1094,6 +1109,7 @@ ${approvedPlan.approach}
 - [x] Delete `src/data/sample.ts` (all consumers now use live mission state)
 - [x] Add error recovery (onboarding shows harness start errors; `HarnessManager.stop()` cleans up)
 - [x] Add mission persistence IPC (`mission:create/get/update/delete/list` handlers + `useMissions` hook)
+- [x] **Fix mission state sync** — `useMission` now loads from `missionStore` on mount and debounces writes (500 ms) back to SQLite, so mission progress survives app restarts
 
 ---
 
