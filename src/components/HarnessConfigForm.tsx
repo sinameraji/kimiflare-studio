@@ -148,7 +148,7 @@ export default function HarnessConfigForm({ harnessId, onSubmit, onBack }: Harne
   const [detecting, setDetecting] = useState(false)
   const [detectError, setDetectError] = useState('')
 
-  // Manual override state (for OpenCode / Pi)
+  // Manual override state (all harnesses)
   const [useManual, setUseManual] = useState(false)
   const [manualProvider, setManualProvider] = useState('')
   const [manualModel, setManualModel] = useState('')
@@ -214,65 +214,156 @@ export default function HarnessConfigForm({ harnessId, onSubmit, onBack }: Harne
     }
   }
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {/* KimiFlare */}
-      {isKimiFlare && (
-        <>
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-studio-surface border border-studio-elevated">
-            <button
-              type="button"
-              onClick={() => setMode('direct')}
-              className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-                mode === 'direct'
-                  ? 'bg-studio-primary text-white'
-                  : 'text-studio-text-secondary hover:text-studio-text'
-              }`}
-            >
-              Direct (Cloudflare)
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('cloud')}
-              className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-                mode === 'cloud'
-                  ? 'bg-studio-primary text-white'
-                  : 'text-studio-text-secondary hover:text-studio-text'
-              }`}
-            >
-              Cloud (GitHub Auth)
-            </button>
+  /* ---------------------------------------------------------------- */
+  /*  Shared detection-card UI                                         */
+  /* ---------------------------------------------------------------- */
+
+  const renderDetectionCard = (title: string) => (
+    <div className="p-4 rounded-xl bg-studio-surface border border-studio-elevated">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-medium text-studio-text">{title}</span>
+        <button
+          type="button"
+          onClick={runDetection}
+          disabled={detecting}
+          className="inline-flex items-center gap-1 text-[10px] text-studio-text-secondary hover:text-studio-text transition-colors"
+        >
+          <RefreshCw className={`w-3 h-3 ${detecting ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+
+      {detecting && (
+        <p className="text-xs text-studio-text-secondary">Detecting existing configuration...</p>
+      )}
+
+      {detectError && (
+        <div className="flex items-center gap-2 text-xs text-studio-critical">
+          <AlertCircle className="w-3.5 h-3.5" />
+          {detectError}
+        </div>
+      )}
+
+      {!detecting && detected && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-xs text-studio-success">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Configuration detected
           </div>
-
-          {/* Detection status for KimiFlare */}
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary">
-              Credentials
-            </span>
-            <button
-              type="button"
-              onClick={runDetection}
-              disabled={detecting}
-              className="inline-flex items-center gap-1 text-[10px] text-studio-text-secondary hover:text-studio-text transition-colors"
-            >
-              <RefreshCw className={`w-3 h-3 ${detecting ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-          </div>
-
-          {detecting && (
-            <p className="text-xs text-studio-text-secondary">Detecting existing configuration...</p>
-          )}
-
-          {!detecting && detected?.mode === mode && (
-            <div className="flex items-center gap-2 text-xs text-studio-success">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Credentials detected from existing setup
+          {isKimiFlare && mode === 'direct' && detected.accountId && (
+            <div className="flex justify-between text-xs">
+              <span className="text-studio-text-secondary">Account ID</span>
+              <span className="text-studio-text font-medium">{detected.accountId}</span>
             </div>
           )}
+          {isKimiFlare && mode === 'direct' && detected.apiToken && (
+            <div className="flex justify-between text-xs">
+              <span className="text-studio-text-secondary">API Token</span>
+              <span className="text-studio-text font-medium">••••••••</span>
+            </div>
+          )}
+          {isKimiFlare && mode === 'cloud' && detected.githubToken && (
+            <div className="flex justify-between text-xs">
+              <span className="text-studio-text-secondary">GitHub Token</span>
+              <span className="text-studio-text font-medium">••••••••</span>
+            </div>
+          )}
+          {isKimiFlare && mode === 'cloud' && detected.remoteWorkerUrl && (
+            <div className="flex justify-between text-xs">
+              <span className="text-studio-text-secondary">Worker URL</span>
+              <span className="text-studio-text font-medium">{detected.remoteWorkerUrl}</span>
+            </div>
+          )}
+          {!isKimiFlare && detected.provider && (
+            <div className="flex justify-between text-xs">
+              <span className="text-studio-text-secondary">Provider</span>
+              <span className="text-studio-text font-medium">{detected.provider}</span>
+            </div>
+          )}
+          {!isKimiFlare && detected.model && (
+            <div className="flex justify-between text-xs">
+              <span className="text-studio-text-secondary">Model</span>
+              <span className="text-studio-text font-medium">{detected.model}</span>
+            </div>
+          )}
+          {!isKimiFlare && detected.apiKey && (
+            <div className="flex justify-between text-xs">
+              <span className="text-studio-text-secondary">API Key</span>
+              <span className="text-studio-text font-medium">••••••••</span>
+            </div>
+          )}
+        </div>
+      )}
 
+      {!detecting && !detected && !detectError && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-xs text-studio-warning">
+            <AlertCircle className="w-3.5 h-3.5" />
+            No configuration found.
+          </div>
+          {isKimiFlare && mode === 'direct' && <KimiFlareDirectHelp />}
+          {isKimiFlare && mode === 'cloud' && <KimiFlareCloudHelp />}
+          {isOpenCode && <OpenCodeHelp />}
+          {isPi && <PiHelp />}
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* KimiFlare mode toggle */}
+      {isKimiFlare && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-studio-surface border border-studio-elevated">
+          <button
+            type="button"
+            onClick={() => setMode('direct')}
+            className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+              mode === 'direct'
+                ? 'bg-studio-primary text-white'
+                : 'text-studio-text-secondary hover:text-studio-text'
+            }`}
+          >
+            Direct (Cloudflare)
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('cloud')}
+            className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+              mode === 'cloud'
+                ? 'bg-studio-primary text-white'
+                : 'text-studio-text-secondary hover:text-studio-text'
+            }`}
+          >
+            Cloud (GitHub Auth)
+          </button>
+        </div>
+      )}
+
+      {/* Detection card — same pattern for all harnesses */}
+      {isKimiFlare && renderDetectionCard('KimiFlare Configuration')}
+      {isOpenCode && renderDetectionCard('OpenCode Configuration')}
+      {isPi && renderDetectionCard('Pi Configuration')}
+
+      {/* Manual override checkbox — same pattern for all harnesses */}
+      <div className="flex items-center gap-2">
+        <input
+          id="useManual"
+          type="checkbox"
+          checked={useManual}
+          onChange={(e) => setUseManual(e.target.checked)}
+          className="w-3.5 h-3.5 rounded border-studio-elevated text-studio-primary focus:ring-studio-primary"
+        />
+        <label htmlFor="useManual" className="text-xs text-studio-text cursor-pointer select-none">
+          Enter configuration manually
+        </label>
+      </div>
+
+      {/* Manual form fields — KimiFlare */}
+      {isKimiFlare && useManual && (
+        <div className="space-y-4">
           {mode === 'direct' && (
-            <div className="space-y-4">
+            <>
               <div>
                 <label className="block text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary mb-1.5">
                   Cloudflare Account ID
@@ -309,11 +400,10 @@ export default function HarnessConfigForm({ harnessId, onSubmit, onBack }: Harne
                 />
               </div>
               <KimiFlareDirectHelp />
-            </div>
+            </>
           )}
-
           {mode === 'cloud' && (
-            <div className="space-y-4">
+            <>
               <div>
                 <label className="block text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary mb-1.5">
                   GitHub Token
@@ -339,133 +429,51 @@ export default function HarnessConfigForm({ harnessId, onSubmit, onBack }: Harne
                 />
               </div>
               <KimiFlareCloudHelp />
-            </div>
+            </>
           )}
-        </>
+        </div>
       )}
 
-      {/* OpenCode / Pi auto-detect */}
-      {(isOpenCode || isPi) && (
-        <>
-          <div className="p-4 rounded-xl bg-studio-surface border border-studio-elevated">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-studio-text">
-                {isOpenCode ? 'OpenCode' : 'Pi'} Configuration
-              </span>
-              <button
-                type="button"
-                onClick={runDetection}
-                disabled={detecting}
-                className="inline-flex items-center gap-1 text-[10px] text-studio-text-secondary hover:text-studio-text transition-colors"
-              >
-                <RefreshCw className={`w-3 h-3 ${detecting ? 'animate-spin' : ''}`} />
-                Refresh
-              </button>
-            </div>
-
-            {detecting && (
-              <p className="text-xs text-studio-text-secondary">Detecting existing configuration...</p>
-            )}
-
-            {detectError && (
-              <div className="flex items-center gap-2 text-xs text-studio-critical">
-                <AlertCircle className="w-3.5 h-3.5" />
-                {detectError}
-              </div>
-            )}
-
-            {!detecting && detected && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-studio-success">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Configuration detected
-                </div>
-                {detected.provider && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-studio-text-secondary">Provider</span>
-                    <span className="text-studio-text font-medium">{detected.provider}</span>
-                  </div>
-                )}
-                {detected.model && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-studio-text-secondary">Model</span>
-                    <span className="text-studio-text font-medium">{detected.model}</span>
-                  </div>
-                )}
-                {detected.apiKey && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-studio-text-secondary">API Key</span>
-                    <span className="text-studio-text font-medium">••••••••</span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!detecting && !detected && !detectError && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-xs text-studio-warning">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  No configuration found.
-                </div>
-                {isOpenCode ? <OpenCodeHelp /> : <PiHelp />}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              id="useManual"
-              type="checkbox"
-              checked={useManual}
-              onChange={(e) => setUseManual(e.target.checked)}
-              className="w-3.5 h-3.5 rounded border-studio-elevated text-studio-primary focus:ring-studio-primary"
-            />
-            <label htmlFor="useManual" className="text-xs text-studio-text cursor-pointer select-none">
-              Enter configuration manually
+      {/* Manual form fields — OpenCode / Pi */}
+      {(isOpenCode || isPi) && useManual && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary mb-1.5">
+              Provider
             </label>
+            <input
+              type="text"
+              value={manualProvider}
+              onChange={(e) => setManualProvider(e.target.value)}
+              placeholder="e.g. openai, anthropic, google"
+              className="w-full px-3 py-2 rounded-lg bg-studio-surface border border-studio-elevated text-sm text-studio-text placeholder:text-studio-text-tertiary focus:outline-none focus:border-studio-primary"
+            />
           </div>
-
-          {useManual && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary mb-1.5">
-                  Provider
-                </label>
-                <input
-                  type="text"
-                  value={manualProvider}
-                  onChange={(e) => setManualProvider(e.target.value)}
-                  placeholder="e.g. openai, anthropic, google"
-                  className="w-full px-3 py-2 rounded-lg bg-studio-surface border border-studio-elevated text-sm text-studio-text placeholder:text-studio-text-tertiary focus:outline-none focus:border-studio-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary mb-1.5">
-                  Model
-                </label>
-                <input
-                  type="text"
-                  value={manualModel}
-                  onChange={(e) => setManualModel(e.target.value)}
-                  placeholder="e.g. gpt-4o, claude-sonnet-4-20250514"
-                  className="w-full px-3 py-2 rounded-lg bg-studio-surface border border-studio-elevated text-sm text-studio-text placeholder:text-studio-text-tertiary focus:outline-none focus:border-studio-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary mb-1.5">
-                  API Key
-                </label>
-                <input
-                  type="password"
-                  value={manualApiKey}
-                  onChange={(e) => setManualApiKey(e.target.value)}
-                  placeholder="sk-..."
-                  className="w-full px-3 py-2 rounded-lg bg-studio-surface border border-studio-elevated text-sm text-studio-text placeholder:text-studio-text-tertiary focus:outline-none focus:border-studio-primary"
-                />
-              </div>
-            </div>
-          )}
-        </>
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary mb-1.5">
+              Model
+            </label>
+            <input
+              type="text"
+              value={manualModel}
+              onChange={(e) => setManualModel(e.target.value)}
+              placeholder="e.g. gpt-4o, claude-sonnet-4-20250514"
+              className="w-full px-3 py-2 rounded-lg bg-studio-surface border border-studio-elevated text-sm text-studio-text placeholder:text-studio-text-tertiary focus:outline-none focus:border-studio-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary mb-1.5">
+              API Key
+            </label>
+            <input
+              type="password"
+              value={manualApiKey}
+              onChange={(e) => setManualApiKey(e.target.value)}
+              placeholder="sk-..."
+              className="w-full px-3 py-2 rounded-lg bg-studio-surface border border-studio-elevated text-sm text-studio-text placeholder:text-studio-text-tertiary focus:outline-none focus:border-studio-primary"
+            />
+          </div>
+        </div>
       )}
 
       <div className="flex gap-3 pt-2">
