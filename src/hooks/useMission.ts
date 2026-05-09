@@ -6,7 +6,7 @@ import type {
   RiskItem,
   ArchitectureDelta,
 } from '../../electron/store/missionStore.js'
-import type { HarnessEvent, FileChangeEvent } from '../types/harness.ts'
+import type { HarnessEvent } from '../types/harness.ts'
 import { createAnomalyDetector, type Anomaly } from '../utils/anomalyDetection.ts'
 
 export type MissionPhase = 'intent' | 'plan' | 'execute' | 'verify' | 'complete' | 'rolled_back'
