@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { sampleMission, samplePlan, sampleActivity } from '../data/sample.ts'
 import ArchitectureDiagram from './ArchitectureDiagram.tsx'
+import MissionReport from './MissionReport.tsx'
 
 const phases = [
   { id: 'intent', label: 'Intent', icon: Target },
@@ -141,6 +142,7 @@ interface CenterStageProps {
 export default function CenterStage({ missionId }: CenterStageProps) {
   const [activePhase, setActivePhase] = useState('plan')
   const [approvalLevel, setApprovalLevel] = useState(50)
+  const [showReport, setShowReport] = useState(false)
 
   // TODO: load mission data by missionId
   void missionId
@@ -377,7 +379,10 @@ export default function CenterStage({ missionId }: CenterStageProps) {
               <p className="text-sm text-studio-text-secondary mb-8">
                 All verification checks passed.
               </p>
-              <button className="px-6 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors">
+              <button
+                onClick={() => setShowReport(true)}
+                className="px-6 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors"
+              >
                 View Mission Report
               </button>
             </div>
@@ -389,6 +394,8 @@ export default function CenterStage({ missionId }: CenterStageProps) {
       {activePhase === 'plan' && (
         <ApprovalBar approvalLevel={approvalLevel} setApprovalLevel={setApprovalLevel} />
       )}
+
+      {showReport && <MissionReport onClose={() => setShowReport(false)} />}
     </main>
   )
 }
