@@ -5,9 +5,8 @@
     "noEmit": false,
     "allowImportingTsExtensions": false,
     "lib": ["ES2022"],
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "jsx": "preserve",
     "strict": true
   },
