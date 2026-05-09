@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import type { HarnessConfig } from './types/harness.ts'
 import LeftRail from './components/LeftRail.tsx'
 import CenterStage from './components/CenterStage.tsx'
 import WelcomeScreen from './components/WelcomeScreen.tsx'
 import OnboardingScreen from './components/OnboardingScreen.tsx'
+import PermissionModal, { extractPermissionRequests } from './components/PermissionModal.tsx'
 import { useHarness } from './hooks/useHarness.ts'
 import { useFS } from './hooks/useFS.ts'
 import { useConfig } from './hooks/useConfig.ts'
@@ -21,6 +22,11 @@ export default function App() {
   const harness = useHarness()
   const fs = useFS()
   const config = useConfig()
+
+  const pendingPermissions = useMemo(
+    () => extractPermissionRequests(harness.events),
+    [harness.events],
+  )
 
   // Try to restore previous session on mount
   useEffect(() => {
@@ -104,6 +110,16 @@ export default function App() {
           )}
         </>
       )}
+
+      <PermissionModal
+        requests={pendingPermissions}
+        onApprove={(requestId, allowSession) => {
+          harness.approvePermission(requestId, allowSession ? 'allow_session' : 'allow').catch(console.error)
+        }}
+        onDeny={(requestId) => {
+          harness.approvePermission(requestId, 'deny').catch(console.error)
+        }}
+      />
     </div>
   )
 }
