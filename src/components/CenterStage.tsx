@@ -11,12 +11,15 @@ import {
   Zap,
   Activity,
   Lock,
+  Radio,
 } from 'lucide-react'
 import { sampleMission, samplePlan, sampleActivity } from '../data/sample.ts'
 import ArchitectureDiagram from './ArchitectureDiagram.tsx'
 import MissionReport from './MissionReport.tsx'
 import IntentBuilder from './IntentBuilder.tsx'
 import { useMentalModels } from '../hooks/useMentalModels.ts'
+import { useHarness } from '../hooks/useHarness.ts'
+import { buildPlanPrompt } from '../utils/promptBuilder.ts'
 
 const phases = [
   { id: 'intent', label: 'Intent', icon: Target },
@@ -156,6 +159,7 @@ export default function CenterStage({ missionId }: CenterStageProps) {
   const [approvalLevel, setApprovalLevel] = useState(50)
   const [showReport, setShowReport] = useState(false)
   const { sections, exportToYaml, updateFromYaml, resetToDefaults } = useMentalModels()
+  const harness = useHarness()
 
   // TODO: load mission data by missionId
   void missionId
@@ -326,7 +330,13 @@ export default function CenterStage({ missionId }: CenterStageProps) {
               onUpdateYaml={updateFromYaml}
               onResetDefaults={resetToDefaults}
               onGenerate={(prompt) => {
-                console.log('Generated prompt:\n', prompt)
+                const planPrompt = buildPlanPrompt({
+                  goal: prompt,
+                  constraints: [],
+                  confidenceLevel: 'execute',
+                  contextScope: 'all',
+                })
+                harness.sendPrompt(planPrompt, { mode: 'plan' }).catch(console.error)
                 setActivePhase('plan')
               }}
             />
@@ -338,9 +348,35 @@ export default function CenterStage({ missionId }: CenterStageProps) {
                 <div className="w-2 h-2 rounded-full bg-studio-primary animate-pulse" />
                 <span className="text-sm font-medium text-studio-text">Executing</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-studio-primary/10 text-studio-primary font-medium ml-auto">
-                  In Progress
+                  {harness.isConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
+
+              {/* Harness Event Log */}
+              {harness.events.length > 0 && (
+                <div className="bg-studio-surface rounded-xl p-4 border border-studio-elevated mb-4 max-h-64 overflow-y-auto">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Radio className="w-3.5 h-3.5 text-studio-primary" />
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary">
+                      Harness Events
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {harness.events.slice(-20).map((event, i) => (
+                      <div key={i} className="text-xs font-mono text-studio-text-secondary">
+                        <span className="text-studio-text-tertiary">[{event.type}]</span>{' '}
+                        {event.type === 'message.delta' && 'text' in event ? (event.text as string).slice(0, 120) : ''}
+                        {event.type === 'tool.start' && 'toolName' in event ? `${event.toolName as string}` : ''}
+                        {event.type === 'tool.result' && 'toolName' in event ? `${event.toolName as string} → ${(event.isError as boolean) ? 'error' : 'ok'}` : ''}
+                        {event.type === 'status' && 'status' in event ? `${event.status as string}` : ''}
+                        {event.type === 'connected' && 'harnessId' in event ? `${event.harnessId as string}` : ''}
+                        {event.type === 'error' && 'message' in event ? (event.message as string) : ''}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="bg-studio-surface rounded-xl p-6 space-y-4 border border-studio-elevated">
                 {sampleActivity.map((item) => (
                   <div key={item.id} className="flex items-start gap-3">
@@ -401,7 +437,11 @@ export default function CenterStage({ missionId }: CenterStageProps) {
           approvalLevel={approvalLevel}
           setApprovalLevel={setApprovalLevel}
           onRequestChanges={() => setActivePhase('intent')}
-          onExecutePlan={() => setActivePhase('execute')}
+          onExecutePlan={() => {
+            const executePrompt = `The following plan has been approved. Execute it now.\nYou may read, write, edit, and execute files as needed.\n\n## Approved Plan\n${samplePlan.approach}\n\n## Constraints\n- Follow the approved approach. Do not deviate without good reason.\n- If you encounter unexpected complexity, pause and summarize before continuing.\n- Run tests after making changes if a test suite exists.`
+            harness.sendPrompt(executePrompt, { mode: 'edit' }).catch(console.error)
+            setActivePhase('execute')
+          }}
         />
       )}
 
