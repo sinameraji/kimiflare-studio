@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "KimiFlare Studio — A CTO dashboard for delegating to AI agents",
   "type": "module",
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev": "npm run build:electron && concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "tsc && vite build && npm run build:electron",
