@@ -19,6 +19,9 @@ export function useMissions() {
 
   useEffect(() => {
     refresh()
+    const onFocus = () => refresh()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
   }, [refresh])
 
   const createMission = useCallback(
