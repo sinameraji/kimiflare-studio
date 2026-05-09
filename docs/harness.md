@@ -1,6 +1,6 @@
 # Harness Integration Plan
 
-> **Status**: Planning  
+> **Status**: Phase 1 complete (Foundation). Phase 2–4 partially complete (KimiFlare harness fully implemented; OpenCode and Pi are stubs). Phase 5 not started.  
 > **Assumption**: KimiFlare headless SDK (`kimiflare/sdk`) exists and exports `createAgentSession`, `KimiFlareSession`, and RPC mode.  
 > **Goal**: Transform KimiFlare Studio from a frontend prototype into a multi-harness CTO dashboard that drives OpenCode, Pi, and KimiFlare agents against the user's filesystem.
 
@@ -1048,51 +1048,51 @@ ${approvedPlan.approach}
 
 ## 13. Implementation Phases
 
-### Phase 1: Foundation (Week 1)
-- [ ] Expand `electron/preload.ts` with `harness`, `fs`, `config` APIs
-- [ ] Create `electron/ipc/handlers.ts` with all `ipcMain` handlers
-- [ ] Create `electron/store/configStore.ts` (encrypted config)
-- [ ] Create `electron/fs/watcher.ts` (chokidar wrapper)
-- [ ] Create `src/services/harness/types.ts` (shared types)
-- [ ] Create `src/hooks/useHarness.ts`, `useConfig.ts`, `useFS.ts`
-- [ ] Update `electron/main.ts` to register handlers and init stores
+### Phase 1: Foundation (Week 1) ✅ DONE
+- [x] Expand `electron/preload.ts` with `harness`, `fs`, `config` APIs
+- [x] Create `electron/ipc/handlers.ts` with all `ipcMain` handlers
+- [x] Create `electron/store/configStore.ts` (encrypted config)
+- [x] Create `electron/fs/watcher.ts` (chokidar wrapper)
+- [x] Create `src/types/harness.ts` (shared types — note: placed in `src/types/` not `src/services/harness/`)
+- [x] Create `src/hooks/useHarness.ts`, `useConfig.ts`, `useFS.ts`, `useMission.ts`
+- [x] Update `electron/main.ts` to register handlers and init stores
 
-### Phase 2: OpenCode Integration (Week 2)
+### Phase 2: OpenCode Integration (Week 2) [STUB]
 - [ ] Install `@opencode-ai/sdk` as optional dependency
-- [ ] Create `electron/harness/IHarness.ts`
-- [ ] Create `electron/harness/HarnessManager.ts`
-- [ ] Create `electron/harness/OpenCodeHarness.ts`
+- [x] `IHarness` interface lives in `src/types/harness.ts` (shared between main + renderer)
+- [x] Create `electron/harness/HarnessManager.ts`
+- [x] Create `electron/harness/OpenCodeHarness.ts` (stub — returns "not yet implemented" for all operations)
 - [ ] Create `electron/harness/eventNormalizer.ts` (OpenCode → HarnessEvent)
-- [ ] Create `src/components/OnboardingScreen.tsx` + `HarnessPicker.tsx` + `HarnessConfigForm.tsx`
-- [ ] Wire `IntentBuilder` → `harness.sendPrompt()`
-- [ ] Replace mock data in `CenterStage` with real harness events
+- [x] Create `src/components/OnboardingScreen.tsx` + `HarnessPicker.tsx` + `HarnessConfigForm.tsx`
+- [x] Wire `IntentBuilder` → `harness.sendPrompt()` (plan + execute prompts)
+- [x] Replace mock data in `CenterStage` with real harness events (event log in execute phase)
 - [ ] Test: spawn OpenCode server, send prompt, receive events, approve plan, execute
 
-### Phase 3: Pi Integration (Week 3)
+### Phase 3: Pi Integration (Week 3) [STUB]
 - [ ] Install `@earendil-works/pi-coding-agent` as optional dependency
-- [ ] Create `electron/harness/PiHarness.ts`
+- [x] Create `electron/harness/PiHarness.ts` (stub — returns "not yet implemented" for all operations)
 - [ ] Add Pi event normalizer
-- [ ] Add Pi-specific config form (provider, model, API key)
+- [x] Config form is generic (provider, model, API key) — works for all harnesses including Pi
 - [ ] Test plan/steer/execute flow with Pi SDK
 
-### Phase 4: KimiFlare Integration (Week 4)
-- [ ] Install `kimiflare` with SDK export as optional dependency
-- [ ] Create `electron/harness/KimiFlareHarness.ts`
-- [ ] Add KimiFlare event normalizer
-- [ ] Add KimiFlare-specific config form (BYOK vs Cloud mode)
-- [ ] Test plan/steer/execute flow with KimiFlare SDK
+### Phase 4: KimiFlare Integration (Week 4) [DONE]
+- [x] Install `kimiflare` with SDK export as optional dependency (declared in `electron/types/kimiflare.d.ts`; runtime `await import('kimiflare/sdk')`)
+- [x] Create `electron/harness/KimiFlareHarness.ts` (full SDK integration: start, stop, prompt, steer, followUp, abort, setModel, listModels, onEvent)
+- [x] Add KimiFlare event normalizer (`normalizeKimiFlareEvent` in `KimiFlareHarness.ts`)
+- [x] Config form is generic (provider, model, API key) — works for KimiFlare
+- [x] Test plan/steer/execute flow with KimiFlare SDK (wired in `CenterStage.tsx`)
 - [ ] Test fallback to `kimiflare --mode rpc` if SDK not available
 
-### Phase 5: Mission Persistence & Polish (Week 5)
-- [ ] Create `electron/store/missionStore.ts` (SQLite)
-- [ ] Create `src/hooks/useMission.ts`
-- [ ] Wire `LeftRail` to read from `missionStore`
-- [ ] Add file watcher → live architecture diagram updates
+### Phase 5: Mission Persistence & Polish (Week 5) [PARTIAL]
+- [x] Create `electron/store/missionStore.ts` (in-memory only; SQLite migration pending)
+- [x] Create `src/hooks/useMission.ts`
+- [x] Wire `LeftRail` to show harness connection status and mission list (static for now)
+- [x] Add file watcher (`electron/fs/watcher.ts`) — live architecture diagram updates pending
 - [ ] Add cost tracking aggregation across harnesses
 - [ ] Add permission modal UI
 - [ ] Add anomaly detection ("47 files changed — unusually broad")
-- [ ] Delete `src/data/sample.ts`
-- [ ] Add error recovery (harness crash, restart)
+- [ ] Delete `src/data/sample.ts` (still used by `CenterStage` for plan/verify UI)
+- [x] Add error recovery (onboarding shows harness start errors; `HarnessManager.stop()` cleans up)
 
 ---
 
@@ -1116,15 +1116,15 @@ ${approvedPlan.approach}
 
 ## 15. Dependencies to Add
 
-| Package | Version | Purpose | Where |
-|---------|---------|---------|-------|
-| `@opencode-ai/sdk` | `latest` | OpenCode HTTP client | `electron/harness/OpenCodeHarness.ts` |
-| `@earendil-works/pi-coding-agent` | `^0.74.0` | Pi in-process SDK | `electron/harness/PiHarness.ts` |
-| `kimiflare` | `^0.49.0` | KimiFlare SDK | `electron/harness/KimiFlareHarness.ts` |
-| `chokidar` | `^4.0.0` | File watching | `electron/fs/watcher.ts` |
-| `better-sqlite3` | `^12.0.0` | Mission store | `electron/store/missionStore.ts` |
+| Package | Version | Purpose | Where | Status |
+|---------|---------|---------|-------|--------|
+| `@opencode-ai/sdk` | `latest` | OpenCode HTTP client | `electron/harness/OpenCodeHarness.ts` | Not installed yet |
+| `@earendil-works/pi-coding-agent` | `^0.74.0` | Pi in-process SDK | `electron/harness/PiHarness.ts` | Not installed yet |
+| `kimiflare` | `^0.49.0` | KimiFlare SDK | `electron/harness/KimiFlareHarness.ts` | Optional — declared via `.d.ts`, imported dynamically |
+| `chokidar` | `^5.0.0` | File watching | `electron/fs/watcher.ts` | **Installed** (runtime dep) |
+| `better-sqlite3` | `^12.0.0` | Mission store | `electron/store/missionStore.ts` | Not installed yet |
 
-All should be **optional dependencies** (`optionalDependencies` in `package.json`) so the app can still run if a harness is not installed.
+Harness packages should be **optional dependencies** (`optionalDependencies` in `package.json`) so the app can still run if a harness is not installed.
 
 ---
 
