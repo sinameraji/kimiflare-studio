@@ -1,20 +1,17 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type {
+  Mission,
   PlanData,
   ActivityItem,
-  UsageData,
   RiskItem,
   ArchitectureDelta,
+  FileChangeItem,
 } from '../../electron/store/missionStore.js'
 import type { HarnessEvent } from '../types/harness.ts'
 
-export type MissionPhase = 'intent' | 'plan' | 'execute' | 'verify' | 'complete' | 'rolled_back'
+export type { Mission } from '../../electron/store/missionStore.js'
 
-export interface FileChangeRecord {
-  path: string
-  type: 'add' | 'change' | 'delete'
-  timestamp: number
-}
+export type MissionPhase = Mission['phase']
 
 export interface Anomaly {
   id: string
@@ -22,22 +19,6 @@ export interface Anomaly {
   severity: 'warning' | 'critical'
   message: string
   timestamp: number
-}
-
-export interface Mission {
-  id: string
-  title: string
-  workspacePath: string
-  harnessId: string
-  phase: MissionPhase
-  status: 'pending_approval' | 'in_progress' | 'completed' | 'failed' | 'aborted'
-  intent: string
-  plan?: PlanData
-  activity: ActivityItem[]
-  usage: UsageData
-  fileChanges: FileChangeRecord[]
-  createdAt: number
-  updatedAt: number
 }
 
 function parsePlanFromText(text: string): PlanData {
@@ -120,7 +101,10 @@ export function useMission(missionId: string | null) {
   const missionRef = useRef(mission)
   missionRef.current = mission
 
-  // Initialise or clear mission when missionId changes
+  const skipNextSyncRef = useRef(false)
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Load mission from store on init; create default if missing
   useEffect(() => {
     if (!missionId) {
       setMission(null)
@@ -128,23 +112,84 @@ export function useMission(missionId: string | null) {
       planTextRef.current = ''
       return
     }
-    setMission({
-      id: missionId,
-      title: 'New Mission',
-      workspacePath: '',
-      harnessId: 'kimiflare',
-      phase: 'intent',
-      status: 'pending_approval',
-      intent: '',
-      activity: [],
-      usage: { inputTokens: 0, outputTokens: 0, reasoningTokens: 0, cost: 0 },
-      fileChanges: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    })
+
+    const id = missionId
+    let cancelled = false
+    async function load() {
+      try {
+        const stored = await window.electronAPI.mission.get(id)
+        if (cancelled) return
+        if (stored) {
+          skipNextSyncRef.current = true
+          setMission(stored)
+        } else {
+          const created = await window.electronAPI.mission.create({
+            id,
+            title: 'New Mission',
+            workspacePath: '',
+            harnessId: 'kimiflare',
+            phase: 'intent',
+            status: 'pending_approval',
+            intent: '',
+            activity: [],
+            usage: { inputTokens: 0, outputTokens: 0, reasoningTokens: 0, cost: 0 },
+            fileChanges: [],
+          })
+          if (cancelled) return
+          skipNextSyncRef.current = true
+          setMission(created)
+        }
+      } catch (err) {
+        console.error('[useMission] failed to load mission:', err)
+      }
+    }
+
+    load()
     setAnomalies([])
     planTextRef.current = ''
+
+    return () => {
+      cancelled = true
+    }
   }, [missionId])
+
+  // Debounced sync to missionStore whenever local state changes
+  useEffect(() => {
+    if (!mission) return
+    if (skipNextSyncRef.current) {
+      skipNextSyncRef.current = false
+      return
+    }
+
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current)
+    }
+
+    syncTimeoutRef.current = setTimeout(async () => {
+      try {
+        await window.electronAPI.mission.update(mission.id, {
+          title: mission.title,
+          workspacePath: mission.workspacePath,
+          harnessId: mission.harnessId,
+          phase: mission.phase,
+          status: mission.status,
+          intent: mission.intent,
+          plan: mission.plan,
+          activity: mission.activity,
+          fileChanges: mission.fileChanges,
+          usage: mission.usage,
+        })
+      } catch (err) {
+        console.error('[useMission] sync failed:', err)
+      }
+    }, 500)
+
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current)
+      }
+    }
+  }, [mission])
 
   const updatePhase = useCallback((phase: MissionPhase) => {
     setMission((prev) => (prev ? { ...prev, phase, updatedAt: Date.now() } : prev))
@@ -185,7 +230,7 @@ export function useMission(missionId: string | null) {
   const recordFileChange = useCallback((path: string, type: 'add' | 'change' | 'delete') => {
     setMission((prev) => {
       if (!prev) return prev
-      const change: FileChangeRecord = { path, type, timestamp: Date.now() }
+      const change: FileChangeItem = { path, type, timestamp: Date.now() }
       const updated = { ...prev, fileChanges: [...prev.fileChanges, change], updatedAt: Date.now() }
       return updated
     })
