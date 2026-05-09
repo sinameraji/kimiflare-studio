@@ -312,8 +312,8 @@ export default function HarnessConfigForm({ harnessId, onSubmit, onBack }: Harne
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* KimiFlare mode toggle */}
-      {isKimiFlare && (
+      {/* KimiFlare mode toggle — only when manual or no config detected */}
+      {isKimiFlare && (useManual || !detected) && (
         <div className="flex items-center gap-3 p-3 rounded-lg bg-studio-surface border border-studio-elevated">
           <button
             type="button"
@@ -337,6 +337,19 @@ export default function HarnessConfigForm({ harnessId, onSubmit, onBack }: Harne
           >
             Cloud (GitHub Auth)
           </button>
+        </div>
+      )}
+
+      {/* When config is detected and not manual, show a read-only mode badge */}
+      {isKimiFlare && !useManual && detected && (
+        <div className="flex items-center gap-2 text-xs text-studio-text-secondary">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary">
+            Mode
+          </span>
+          <span className="px-2 py-0.5 rounded-full bg-studio-primary/10 text-studio-primary font-medium">
+            {mode === 'direct' ? 'Direct (Cloudflare)' : 'Cloud (GitHub Auth)'}
+          </span>
+          <span className="text-[10px] text-studio-text-tertiary">— detected from existing setup</span>
         </div>
       )}
 
