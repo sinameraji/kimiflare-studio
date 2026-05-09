@@ -8,14 +8,6 @@ export interface IntentData {
   deadline?: string
 }
 
-export interface PlanData {
-  approach: string
-  architectureDelta: string
-  risks: string[]
-  costProjection: string
-  alternatives: string[]
-}
-
 export function buildPlanPrompt(intent: IntentData): string {
   return `
 You are in PLAN MODE. Do not write, edit, or execute any files.
@@ -42,7 +34,7 @@ You may only touch: ${intent.contextScope}
 `.trim()
 }
 
-export function buildExecutePrompt(approvedPlan: PlanData): string {
+export function buildExecutePrompt(approvedPlan: { approach: string }): string {
   return `
 The following plan has been approved. Execute it now.
 You may read, write, edit, and execute files as needed.
