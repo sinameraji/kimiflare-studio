@@ -38,8 +38,6 @@ export default function App() {
         const list = await window.electronAPI.mission.list()
         if (list.length > 0) {
           setSelectedMissionId(list[0].id)
-        } else {
-          setSelectedMissionId('mission-001')
         }
       }
       setIsRestoring(false)
