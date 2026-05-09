@@ -112,6 +112,7 @@ class KimiFlareHarness implements IHarness {
         KIMIFLARE_MODEL: options.config.model || '',
         KIMIFLARE_PROVIDER: options.config.provider || '',
         KIMIFLARE_API_KEY: options.config.apiKey || '',
+        KIMIFLARE_CLOUD_MODE: String(options.config.cloudMode ?? false),
       },
     })
 

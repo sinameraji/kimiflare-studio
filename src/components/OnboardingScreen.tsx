@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, FolderOpen, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, FolderOpen, CheckCircle2, ChevronLeft } from 'lucide-react'
 import type { HarnessConfig, HarnessId } from '../types/harness.ts'
 import HarnessPicker from './HarnessPicker.tsx'
 import HarnessConfigForm from './HarnessConfigForm.tsx'
@@ -42,7 +42,7 @@ export default function OnboardingScreen({ onComplete, onSelectFolder }: Onboard
     <div className="flex-1 flex items-center justify-center h-full overflow-y-auto">
       <div className="w-full max-w-2xl px-8">
         {/* Progress */}
-        <div className="flex items-center gap-2 mb-10">
+        <div className="flex items-center justify-center gap-2 mb-10">
           {(['welcome', 'harness', 'config', 'workspace', 'done'] as Step[]).map((s, i) => (
             <div key={s} className="flex items-center gap-2">
               <div
@@ -86,7 +86,14 @@ export default function OnboardingScreen({ onComplete, onSelectFolder }: Onboard
               per project.
             </p>
             <HarnessPicker selected={selectedHarness} onSelect={setSelectedHarness} />
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-between">
+              <button
+                onClick={() => setStep('welcome')}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-studio-text-secondary hover:text-studio-text transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
               <button
                 onClick={() => selectedHarness && setStep('config')}
                 disabled={!selectedHarness}
@@ -112,6 +119,7 @@ export default function OnboardingScreen({ onComplete, onSelectFolder }: Onboard
                 setConfig(cfg)
                 setStep('workspace')
               }}
+              onBack={() => setStep('harness')}
             />
           </div>
         )}
@@ -136,7 +144,14 @@ export default function OnboardingScreen({ onComplete, onSelectFolder }: Onboard
                 </span>
               )}
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-between">
+              <button
+                onClick={() => setStep('config')}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-studio-text-secondary hover:text-studio-text transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
               <button
                 onClick={() => workspacePath && setStep('done')}
                 disabled={!workspacePath}
@@ -161,14 +176,23 @@ export default function OnboardingScreen({ onComplete, onSelectFolder }: Onboard
                 {error}
               </div>
             )}
-            <button
-              onClick={handleComplete}
-              disabled={isStarting}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors disabled:opacity-60"
-            >
-              {isStarting ? 'Starting...' : 'Start First Mission'}
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setStep('workspace')}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg border border-studio-elevated text-sm text-studio-text hover:border-studio-primary transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+              <button
+                onClick={handleComplete}
+                disabled={isStarting}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors disabled:opacity-60"
+              >
+                {isStarting ? 'Starting...' : 'Start First Mission'}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>

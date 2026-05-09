@@ -2,11 +2,20 @@ export type HarnessId = 'opencode' | 'pi' | 'kimiflare'
 
 export interface HarnessConfig {
   harnessId: HarnessId
+
+  // Generic overrides (used when auto-detect fails or user wants manual entry)
   provider?: string
   model?: string
   apiKey?: string
   baseUrl?: string
   cwd?: string
+
+  // KimiFlare-specific
+  mode?: 'direct' | 'cloud'
+  accountId?: string
+  apiToken?: string
+  githubToken?: string
+  remoteWorkerUrl?: string
 }
 
 export interface HarnessStartOptions {
