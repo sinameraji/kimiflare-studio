@@ -1,6 +1,6 @@
 # Harness Integration Plan
 
-> **Status**: Phase 1 complete (Foundation). Phase 2–4 partially complete (KimiFlare harness fully implemented; OpenCode and Pi are stubs). Phase 5 complete (Mission Persistence & Polish).  
+> **Status**: Phase 1 complete (Foundation). Phase 2–4 complete (all three harnesses implemented: OpenCode, Pi, KimiFlare). Phase 5 complete (Mission Persistence & Polish).  
 > **Assumption**: KimiFlare headless SDK (`kimiflare/sdk`) exists and exports `createAgentSession`, `KimiFlareSession`, and RPC mode.  
 > **Goal**: Transform KimiFlare Studio from a frontend prototype into a multi-harness CTO dashboard that drives OpenCode, Pi, and KimiFlare agents against the user's filesystem.
 
@@ -1072,21 +1072,21 @@ ${approvedPlan.approach}
 - [x] Create `src/hooks/useHarness.ts`, `useConfig.ts`, `useFS.ts`, `useMission.ts`
 - [x] Update `electron/main.ts` to register handlers and init stores
 
-### Phase 2: OpenCode Integration (Week 2) [STUB]
-- [ ] Install `@opencode-ai/sdk` as optional dependency
+### Phase 2: OpenCode Integration (Week 2) ✅ DONE
+- [x] Install `@opencode-ai/sdk` as optional dependency (declared in `electron/types/opencode.d.ts`; runtime `await import('@opencode-ai/sdk')`)
 - [x] `IHarness` interface lives in `src/types/harness.ts` (shared between main + renderer)
 - [x] Create `electron/harness/HarnessManager.ts`
-- [x] Create `electron/harness/OpenCodeHarness.ts` (stub — returns "not yet implemented" for all operations)
-- [ ] Create `electron/harness/eventNormalizer.ts` (OpenCode → HarnessEvent)
+- [x] Create `electron/harness/OpenCodeHarness.ts` (full implementation: spawn server, SSE streaming, HTTP client, permission approval)
+- [x] Add OpenCode event normalizer (`normalizeOpenCodeEvent` in `OpenCodeHarness.ts`)
 - [x] Create `src/components/OnboardingScreen.tsx` + `HarnessPicker.tsx` + `HarnessConfigForm.tsx`
 - [x] Wire `IntentBuilder` → `harness.sendPrompt()` (plan + execute prompts)
 - [x] Replace mock data in `CenterStage` with real harness events (event log in execute phase)
 - [ ] Test: spawn OpenCode server, send prompt, receive events, approve plan, execute
 
-### Phase 3: Pi Integration (Week 3) [STUB]
-- [ ] Install `@earendil-works/pi-coding-agent` as optional dependency
-- [x] Create `electron/harness/PiHarness.ts` (stub — returns "not yet implemented" for all operations)
-- [ ] Add Pi event normalizer
+### Phase 3: Pi Integration (Week 3) ✅ DONE
+- [x] Install `@earendil-works/pi-coding-agent` as optional dependency (declared in `electron/types/pi.d.ts`; runtime `await import('@earendil-works/pi-coding-agent')`)
+- [x] Create `electron/harness/PiHarness.ts` (full implementation: in-process SDK with AuthStorage, ModelRegistry, SessionManager)
+- [x] Add Pi event normalizer (`normalizePiEvent` in `PiHarness.ts`)
 - [x] Config form is generic (provider, model, API key) — works for all harnesses including Pi
 - [ ] Test plan/steer/execute flow with Pi SDK
 
