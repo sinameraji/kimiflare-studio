@@ -12,6 +12,7 @@ const createWindow = () => {
     minWidth: 1200,
     minHeight: 700,
     titleBarStyle: 'hiddenInset',
+    icon: path.join(__dirname, '../public/logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

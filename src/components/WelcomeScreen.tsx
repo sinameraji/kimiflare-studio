@@ -1,4 +1,4 @@
-import { Target, ArrowRight, Sparkles } from 'lucide-react'
+import { Target, ArrowRight } from 'lucide-react'
 
 interface WelcomeScreenProps {
   onStartMission: () => void
@@ -8,8 +8,10 @@ export default function WelcomeScreen({ onStartMission }: WelcomeScreenProps) {
   return (
     <div className="flex-1 flex items-center justify-center h-full overflow-y-auto">
       <div className="text-center px-8 max-w-xl">
+        <div className="flex items-center justify-center mb-5">
+          <img src="/logo.png" alt="KimiFlare" className="w-12 h-12 object-cover rounded-xl" />
+        </div>
         <div className="flex items-center justify-center gap-2 mb-5">
-          <Sparkles className="w-4 h-4 text-studio-primary" />
           <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-primary">
             AI Engineering Dashboard
           </span>

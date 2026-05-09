@@ -15,6 +15,8 @@ import {
 import { sampleMission, samplePlan, sampleActivity } from '../data/sample.ts'
 import ArchitectureDiagram from './ArchitectureDiagram.tsx'
 import MissionReport from './MissionReport.tsx'
+import IntentBuilder from './IntentBuilder.tsx'
+import { useMentalModels } from '../hooks/useMentalModels.ts'
 
 const phases = [
   { id: 'intent', label: 'Intent', icon: Target },
@@ -79,9 +81,13 @@ function Stepper({ activePhase, onChange }: { activePhase: string; onChange: (id
 function ApprovalBar({
   approvalLevel,
   setApprovalLevel,
+  onRequestChanges,
+  onExecutePlan,
 }: {
   approvalLevel: number
   setApprovalLevel: (v: number) => void
+  onRequestChanges: () => void
+  onExecutePlan: () => void
 }) {
   return (
     <div className="sticky bottom-0 bg-studio-bg/95 backdrop-blur-sm border-t border-studio-elevated py-5 px-8">
@@ -123,10 +129,16 @@ function ApprovalBar({
         </div>
 
         <div className="flex gap-3">
-          <button className="flex-1 py-2.5 rounded-lg bg-studio-surface text-studio-text-secondary text-sm font-medium hover:text-studio-text transition-colors border border-studio-elevated">
+          <button
+            onClick={onRequestChanges}
+            className="flex-1 py-2.5 rounded-lg bg-studio-surface text-studio-text-secondary text-sm font-medium hover:text-studio-text transition-colors border border-studio-elevated"
+          >
             Request Changes
           </button>
-          <button className="flex-1 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors">
+          <button
+            onClick={onExecutePlan}
+            className="flex-1 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors"
+          >
             Execute Plan
           </button>
         </div>
@@ -143,6 +155,7 @@ export default function CenterStage({ missionId }: CenterStageProps) {
   const [activePhase, setActivePhase] = useState('plan')
   const [approvalLevel, setApprovalLevel] = useState(50)
   const [showReport, setShowReport] = useState(false)
+  const { sections, exportToYaml, updateFromYaml, resetToDefaults } = useMentalModels()
 
   // TODO: load mission data by missionId
   void missionId
@@ -307,35 +320,16 @@ export default function CenterStage({ missionId }: CenterStageProps) {
           )}
 
           {activePhase === 'intent' && (
-            <div className="mt-6">
-              <div className="space-y-5">
-                <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-2">
-                    Goal
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="w-full bg-studio-surface rounded-lg p-3 text-sm text-studio-text placeholder-studio-text-tertiary focus:outline-none focus:ring-1 focus:ring-studio-primary/50 resize-none border border-studio-elevated"
-                    placeholder="What do you want to build or change?"
-                    defaultValue="Refactor the authentication middleware from session-based to JWT with Redis-backed revocation"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-2">
-                    Constraints
-                  </label>
-                  <textarea
-                    rows={2}
-                    className="w-full bg-studio-surface rounded-lg p-3 text-sm text-studio-text placeholder-studio-text-tertiary focus:outline-none focus:ring-1 focus:ring-studio-primary/50 resize-none border border-studio-elevated"
-                    placeholder="Non-negotiables..."
-                    defaultValue="Must maintain backward compatibility during migration. No downtime allowed. Budget under $100/mo additional infra."
-                  />
-                </div>
-                <button className="w-full py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors">
-                  Generate Plan
-                </button>
-              </div>
-            </div>
+            <IntentBuilder
+              sections={sections}
+              yamlText={exportToYaml()}
+              onUpdateYaml={updateFromYaml}
+              onResetDefaults={resetToDefaults}
+              onGenerate={(prompt) => {
+                console.log('Generated prompt:\n', prompt)
+                setActivePhase('plan')
+              }}
+            />
           )}
 
           {activePhase === 'execute' && (
@@ -343,8 +337,11 @@ export default function CenterStage({ missionId }: CenterStageProps) {
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-2 h-2 rounded-full bg-studio-primary animate-pulse" />
                 <span className="text-sm font-medium text-studio-text">Executing</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-studio-primary/10 text-studio-primary font-medium ml-auto">
+                  In Progress
+                </span>
               </div>
-              <div className="bg-studio-surface rounded-xl p-6 space-y-4">
+              <div className="bg-studio-surface rounded-xl p-6 space-y-4 border border-studio-elevated">
                 {sampleActivity.map((item) => (
                   <div key={item.id} className="flex items-start gap-3">
                     <div
@@ -367,6 +364,12 @@ export default function CenterStage({ missionId }: CenterStageProps) {
                   <span className="text-sm text-studio-text-tertiary animate-pulse">Working...</span>
                 </div>
               </div>
+              <button
+                onClick={() => setActivePhase('verify')}
+                className="w-full mt-6 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors"
+              >
+                Mark Complete & Verify
+              </button>
             </div>
           )}
 
@@ -379,12 +382,14 @@ export default function CenterStage({ missionId }: CenterStageProps) {
               <p className="text-sm text-studio-text-secondary mb-8">
                 All verification checks passed.
               </p>
-              <button
-                onClick={() => setShowReport(true)}
-                className="px-6 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors"
-              >
-                View Mission Report
-              </button>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => setShowReport(true)}
+                  className="px-6 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors"
+                >
+                  View Mission Report
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -392,7 +397,12 @@ export default function CenterStage({ missionId }: CenterStageProps) {
 
       {/* Sticky Approval Bar — only in Plan phase */}
       {activePhase === 'plan' && (
-        <ApprovalBar approvalLevel={approvalLevel} setApprovalLevel={setApprovalLevel} />
+        <ApprovalBar
+          approvalLevel={approvalLevel}
+          setApprovalLevel={setApprovalLevel}
+          onRequestChanges={() => setActivePhase('intent')}
+          onExecutePlan={() => setActivePhase('execute')}
+        />
       )}
 
       {showReport && <MissionReport onClose={() => setShowReport(false)} />}

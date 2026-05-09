@@ -27,9 +27,7 @@ export default function LeftRail({ selectedMissionId, onSelectMission, onNewMiss
       {/* Header */}
       <div className="px-4 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-studio-primary flex items-center justify-center">
-            <span className="text-white font-bold text-xs">K</span>
-          </div>
+          <img src="/logo.png" alt="KimiFlare" className="w-7 h-7 rounded-md object-cover" />
           <div>
             <h1 className="font-semibold text-sm text-studio-text leading-tight">KimiFlare</h1>
             <p className="text-[11px] text-studio-text-tertiary leading-tight">Studio</p>

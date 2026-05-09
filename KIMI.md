@@ -37,10 +37,11 @@
 | Directory / File | Rationale |
 |------------------|-----------|
 | `src/` | Renderer process code (React app). Strict TypeScript, no emit. |
-| `src/components/` | React components — one file per major UI region (LeftRail, CenterStage, RightPanel, etc.). |
+| `src/components/` | React components — one file per major UI region (LeftRail, CenterStage, WelcomeScreen, etc.). |
 | `src/data/sample.ts` | Static mock data for the prototype. All components read from here until a backend is wired. |
+| `src/utils/` | Small pure helpers (e.g., `exportImage.ts` for clipboard image generation). |
 | `src/main.tsx` | Renderer entry point. Mounts `<App />` into `#root` with `StrictMode`. |
-| `src/index.css` | Global styles + Tailwind directives. |
+| `src/index.css` | Global styles + Tailwind directives + custom scrollbar styling. |
 | `electron/` | Electron main-process code. |
 | `electron/main.ts` | Entry point for the main process. Creates `BrowserWindow`, loads dev URL or `dist/index.html`. |
 | `electron/preload.ts` | Preload script exposing a typed `window.electronAPI` via `contextBridge`. |
@@ -48,6 +49,7 @@
 | `dist-electron/` | Compiled Electron main/preload output. |
 | `index.html` | HTML shell for the renderer. Loads Google Fonts (Inter, JetBrains Mono). |
 | `PLAN.md` | Product plan and feature roadmap. Read this for UX intent and "what we do NOT build". |
+| `PLAN-EXECUTION.md` | Execution log tracking delivered milestones (M0–M5). |
 
 ---
 
@@ -78,7 +80,7 @@
 ### Git
 - **Commit style**: Conventional commits (`feat(ui):`, `fix(electron):`, `refactor(ui):`).
 - **Branching**: Single `main` branch. No feature branches observed in history.
-- **History**: Short, focused commits (7 commits total at time of writing).
+- **History**: Short, focused commits (13 commits total at time of writing).
 
 ### Testing
 - None yet. If adding tests, place them co-located or in a `src/__tests__/` directory. Follow the existing file-naming convention (`*.test.tsx`).
@@ -91,7 +93,7 @@
 |------|--------|
 | **Add runtime** | `npm install <pkg>` |
 | **Add dev** | `npm install -D <pkg>` |
-| **Runtime deps** | React, React-DOM, `lucide-react`, `@xyflow/react` (flow diagrams). Keep these external — Vite bundles them. |
+| **Runtime deps** | React, React-DOM, `lucide-react`, `@xyflow/react` (flow diagrams), `html-to-image` (report export). Keep these external — Vite bundles them. |
 | **Native deps** | Electron is a devDependency. Do not bundle Electron into the renderer build. |
 | **Version pinning** | Uses caret ranges (`^`) in `package.json`. `package-lock.json` is committed. |
 
@@ -130,5 +132,5 @@
   - **Preload** (`electron/preload.ts`): Minimal `contextBridge` exposing safe IPC helpers.
 - **State**: Local React state (`useState`) only. No Redux, Zustand, or context providers yet.
 - **Data flow**: Components import mock data from `src/data/sample.ts`. No API client exists.
-- **UI layout**: "Mission Control" — LeftRail (agents/projects/risk), CenterStage (mission lifecycle), RightPanel (decisions/costs/diagrams), BottomBar (status).
+- **UI layout**: "Mission Control" — LeftRail (mission queue), CenterStage (mission lifecycle with intent/plan/execute/verify phases), WelcomeScreen (landing).
 - **Future IPC**: `window.electronAPI.sendMessage` / `onMessage` are wired but unused. Extend `preload.ts` and add `ipcMain` handlers in `main.ts` when needed.
