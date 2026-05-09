@@ -7,13 +7,20 @@ import type {
   ArchitectureDelta,
 } from '../../electron/store/missionStore.js'
 import type { HarnessEvent } from '../types/harness.ts'
-import { createAnomalyDetector, type Anomaly } from '../utils/anomalyDetection.ts'
 
 export type MissionPhase = 'intent' | 'plan' | 'execute' | 'verify' | 'complete' | 'rolled_back'
 
-export interface FileChangeItem {
+export interface FileChangeRecord {
   path: string
   type: 'add' | 'change' | 'delete'
+  timestamp: number
+}
+
+export interface Anomaly {
+  id: string
+  category: string
+  severity: 'warning' | 'critical'
+  message: string
   timestamp: number
 }
 
@@ -27,8 +34,8 @@ export interface Mission {
   intent: string
   plan?: PlanData
   activity: ActivityItem[]
-  fileChanges: FileChangeItem[]
   usage: UsageData
+  fileChanges: FileChangeRecord[]
   createdAt: number
   updatedAt: number
 }
@@ -112,7 +119,6 @@ export function useMission(missionId: string | null) {
   const planTextRef = useRef('')
   const missionRef = useRef(mission)
   missionRef.current = mission
-  const detectorRef = useRef(createAnomalyDetector())
 
   // Initialise or clear mission when missionId changes
   useEffect(() => {
@@ -120,7 +126,6 @@ export function useMission(missionId: string | null) {
       setMission(null)
       setAnomalies([])
       planTextRef.current = ''
-      detectorRef.current.reset()
       return
     }
     setMission({
@@ -132,14 +137,13 @@ export function useMission(missionId: string | null) {
       status: 'pending_approval',
       intent: '',
       activity: [],
-      fileChanges: [],
       usage: { inputTokens: 0, outputTokens: 0, reasoningTokens: 0, cost: 0 },
+      fileChanges: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })
     setAnomalies([])
     planTextRef.current = ''
-    detectorRef.current.reset()
   }, [missionId])
 
   const updatePhase = useCallback((phase: MissionPhase) => {
@@ -178,29 +182,36 @@ export function useMission(missionId: string | null) {
     setMission((prev) => (prev ? { ...prev, plan, updatedAt: Date.now() } : prev))
   }, [])
 
-  const recordFileChange = useCallback((path: string, changeType: FileChangeItem['type'] = 'change') => {
-    const anomaly = detectorRef.current.recordFileChange(path)
-    if (anomaly) {
-      setAnomalies((prev) => [...prev, anomaly])
-    }
+  const recordFileChange = useCallback((path: string, type: 'add' | 'change' | 'delete') => {
     setMission((prev) => {
       if (!prev) return prev
-      return {
-        ...prev,
-        fileChanges: [...prev.fileChanges, { path, type: changeType, timestamp: Date.now() }],
-        updatedAt: Date.now(),
+      const change: FileChangeRecord = { path, type, timestamp: Date.now() }
+      const updated = { ...prev, fileChanges: [...prev.fileChanges, change], updatedAt: Date.now() }
+      return updated
+    })
+
+    // Anomaly detection
+    setMission((prev) => {
+      if (!prev) return prev
+      const uniqueFiles = new Set(prev.fileChanges.map((c) => c.path)).size
+      if (uniqueFiles === 20 || uniqueFiles === 50) {
+        setAnomalies((a) => [
+          ...a,
+          {
+            id: `anomaly-${Date.now()}`,
+            category: 'Scope',
+            severity: uniqueFiles >= 50 ? 'critical' : 'warning',
+            message: `This mission has touched ${uniqueFiles} unique files — ${uniqueFiles >= 50 ? 'critically broad' : 'unusually broad'} scope. Review the plan to ensure scope has not crept.`,
+            timestamp: Date.now(),
+          },
+        ])
       }
+      return prev
     })
   }, [])
 
   const processEvent = useCallback((event: HarnessEvent) => {
     const currentPhase = missionRef.current?.phase
-
-    // Run anomaly detection
-    const anomaly = detectorRef.current.processEvent(event)
-    if (anomaly) {
-      setAnomalies((prev) => [...prev, anomaly])
-    }
 
     switch (event.type) {
       case 'message.delta': {
@@ -285,8 +296,8 @@ export function useMission(missionId: string | null) {
     appendActivity,
     accumulatePlanDelta,
     parsePlan,
-    processEvent,
     recordFileChange,
+    processEvent,
     setMission,
   }
 }

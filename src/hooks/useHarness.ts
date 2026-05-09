@@ -1,10 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { HarnessState, HarnessEvent, HarnessConfig, PromptOptions, PermissionDecision } from '../types/harness.ts'
 
+export interface PendingPermission {
+  requestId: string
+  toolName: string
+  args: unknown
+}
+
 export function useHarness() {
   const [state, setState] = useState<HarnessState | null>(null)
   const [events, setEvents] = useState<HarnessEvent[]>([])
   const [isConnected, setIsConnected] = useState(false)
+  const [pendingPermissions, setPendingPermissions] = useState<PendingPermission[]>([])
 
   useEffect(() => {
     const unsubscribe = window.electronAPI.harness.onEvent((event) => {
@@ -14,12 +21,22 @@ export function useHarness() {
       if (event.type === 'status') {
         setState((prev) => (prev ? { ...prev, status: event.status } : null))
       }
+      if (event.type === 'permission.request') {
+        setPendingPermissions((prev) => [
+          ...prev,
+          { requestId: event.requestId, toolName: event.toolName, args: event.args },
+        ])
+      }
+      if (event.type === 'permission.resolved') {
+        setPendingPermissions((prev) => prev.filter((p) => p.requestId !== event.requestId))
+      }
     })
     return unsubscribe
   }, [])
 
   const start = useCallback((config: HarnessConfig) => {
     setEvents([])
+    setPendingPermissions([])
     return window.electronAPI.harness.start(config)
   }, [])
 
@@ -52,6 +69,7 @@ export function useHarness() {
   }, [])
 
   const approvePermission = useCallback((requestId: string, decision: PermissionDecision) => {
+    setPendingPermissions((prev) => prev.filter((p) => p.requestId !== requestId))
     return window.electronAPI.harness.approvePermission(requestId, decision)
   }, [])
 
@@ -59,6 +77,7 @@ export function useHarness() {
     state,
     events,
     isConnected,
+    pendingPermissions,
     start,
     stop,
     sendPrompt,
