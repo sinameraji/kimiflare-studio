@@ -12,19 +12,22 @@ const harnesses: HarnessOption[] = [
     id: 'kimiflare',
     name: 'KimiFlare',
     version: 'v0.49',
-    description: 'In-process SDK with direct session control. Best for Node.js projects.',
+    description:
+      'Direct Cloudflare Workers AI or cloud proxy via GitHub auth. Full session control with steer and follow-up.',
   },
   {
     id: 'opencode',
     name: 'OpenCode',
     version: 'latest',
-    description: 'HTTP API via spawned server. Mature OpenAPI with SSE events.',
+    description:
+      'Reuses your existing OpenCode setup — providers, models, and billing auto-detected from ~/.config/opencode.',
   },
   {
     id: 'pi',
     name: 'Pi',
     version: 'v0.74',
-    description: 'In-process SDK with JSONL RPC fallback. Fast and lightweight.',
+    description:
+      'Reuses your existing Pi credentials from AuthStorage. Lightweight with steer support and model registry.',
   },
 ]
 

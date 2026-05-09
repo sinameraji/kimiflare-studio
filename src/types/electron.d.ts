@@ -21,6 +21,7 @@ export interface ElectronAPI {
     setModel: (modelId: string) => Promise<void>
     listModels: () => Promise<ModelInfo[]>
     approvePermission: (requestId: string, decision: PermissionDecision) => Promise<void>
+    detectConfig: (harnessId: string) => Promise<Record<string, unknown> | null>
     onEvent: (callback: (event: HarnessEvent) => void) => () => void
   }
   fs: {
