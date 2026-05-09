@@ -23,6 +23,7 @@ import IntentBuilder from './IntentBuilder.tsx'
 import { useMentalModels } from '../hooks/useMentalModels.ts'
 import { useHarness } from '../hooks/useHarness.ts'
 import { useMission, type MissionPhase } from '../hooks/useMission.ts'
+import { useFS } from '../hooks/useFS.ts'
 import { buildPlanPrompt, buildExecutePrompt } from '../utils/promptBuilder.ts'
 import type { FileChangeEvent } from '../types/harness.ts'
 
@@ -166,6 +167,18 @@ export default function CenterStage({ missionId, fileChanges = [] }: CenterStage
   const { sections, exportToYaml, updateFromYaml, resetToDefaults } = useMentalModels()
   const harness = useHarness()
   const mission = useMission(missionId)
+  const fs = useFS()
+
+  // Watch/unwatch mission workspace as it changes
+  useEffect(() => {
+    const workspacePath = mission.mission?.workspacePath
+    if (workspacePath) {
+      fs.watchDirectory(workspacePath)
+      return () => {
+        fs.unwatchDirectory(workspacePath)
+      }
+    }
+  }, [mission.mission?.workspacePath, fs])
 
   // Feed harness events into mission state
   const processedCountRef = useRef(0)
