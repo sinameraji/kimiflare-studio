@@ -44,7 +44,7 @@ export class HarnessManager {
       }
     })
 
-    const cwd = config.cwd || process.cwd()
+    const cwd = (config.cwd as string | undefined) || process.cwd()
     const options: HarnessStartOptions = {
       cwd,
       config,

@@ -81,7 +81,7 @@ class KimiFlareHarness implements IHarness {
     this.emit({ type: 'disconnected', harnessId: this.id })
   }
 
-  async sendPrompt(prompt: string, options?: PromptOptions): Promise<void> {
+  async sendPrompt(prompt: string, _options?: PromptOptions): Promise<void> {
     if (!this.session) throw new Error('Harness not started')
     await this.session.prompt(prompt)
   }

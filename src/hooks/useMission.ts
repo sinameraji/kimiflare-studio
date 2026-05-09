@@ -22,7 +22,7 @@ export interface Mission {
   updatedAt: number
 }
 
-export function useMission(missionId: string | null) {
+export function useMission(_missionId: string | null) {
   const [mission, setMission] = useState<Mission | null>(null)
 
   const updatePhase = useCallback((phase: MissionPhase) => {
