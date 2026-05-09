@@ -14,8 +14,30 @@ export const sampleMission = {
 export const samplePlan = {
   approach: `Migrate the current session-based authentication to a stateless JWT system backed by Redis for token revocation. This eliminates the need for sticky sessions and reduces database load on the PostgreSQL primary.`,
   architectureDelta: {
-    before: ['Load Balancer → App Server (sticky sessions) → PostgreSQL (sessions table)'],
-    after: ['Load Balancer → App Server (stateless) → Redis (token blacklist) → PostgreSQL (users only)'],
+    before: {
+      nodes: [
+        { id: 'lb', label: 'Load Balancer', type: 'service' as const },
+        { id: 'app', label: 'App Server', type: 'service' as const },
+        { id: 'pg', label: 'PostgreSQL', type: 'database' as const },
+      ],
+      edges: [
+        { from: 'lb', to: 'app' },
+        { from: 'app', to: 'pg' },
+      ],
+    },
+    after: {
+      nodes: [
+        { id: 'lb', label: 'Load Balancer', type: 'service' as const },
+        { id: 'app', label: 'App Server', type: 'service' as const },
+        { id: 'redis', label: 'Redis', type: 'database' as const, isNew: true },
+        { id: 'pg', label: 'PostgreSQL', type: 'database' as const },
+      ],
+      edges: [
+        { from: 'lb', to: 'app' },
+        { from: 'app', to: 'redis' },
+        { from: 'app', to: 'pg' },
+      ],
+    },
   },
   risks: [
     { category: 'Security', level: 'medium' as const, confidence: 'medium' as const, description: 'JWT secret rotation strategy not yet defined. If leaked, all tokens compromised.' },

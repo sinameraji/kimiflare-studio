@@ -13,6 +13,7 @@ import {
   Lock,
 } from 'lucide-react'
 import { sampleMission, samplePlan, sampleActivity } from '../data/sample.ts'
+import ArchitectureDiagram from './ArchitectureDiagram.tsx'
 
 const phases = [
   { id: 'intent', label: 'Intent', icon: Target },
@@ -133,9 +134,16 @@ function ApprovalBar({
   )
 }
 
-export default function CenterStage() {
+interface CenterStageProps {
+  missionId: string
+}
+
+export default function CenterStage({ missionId }: CenterStageProps) {
   const [activePhase, setActivePhase] = useState('plan')
   const [approvalLevel, setApprovalLevel] = useState(50)
+
+  // TODO: load mission data by missionId
+  void missionId
 
   return (
     <main className="flex-1 flex flex-col h-full overflow-hidden">
@@ -173,14 +181,30 @@ export default function CenterStage() {
 
               {/* Approach */}
               <div className="mb-8">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-3">
-                  Approach
-                </span>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary">
+                    Approach
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-studio-success-light text-studio-success font-medium">
+                    High confidence
+                  </span>
+                </div>
                 <div className="bg-studio-surface rounded-xl p-6 border border-studio-elevated">
                   <p className="text-sm text-studio-text-secondary leading-relaxed">
                     {samplePlan.approach}
                   </p>
                 </div>
+              </div>
+
+              {/* Architecture Diagram */}
+              <div className="mb-8">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-3">
+                  Architecture Delta
+                </span>
+                <ArchitectureDiagram
+                  before={samplePlan.architectureDelta.before}
+                  after={samplePlan.architectureDelta.after}
+                />
               </div>
 
               {/* Risk Assessment */}
@@ -202,7 +226,7 @@ export default function CenterStage() {
                           : risk.level === 'medium'
                             ? 'border-studio-warning/30'
                             : 'border-studio-critical/30'
-                      }`}
+                      } ${risk.confidence === 'medium' ? 'border-l-4 border-l-studio-warning' : ''}`}
                     >
                       <div className="flex items-center gap-2 mb-3">
                         <div
@@ -229,9 +253,24 @@ export default function CenterStage() {
                           {risk.level}
                         </span>
                       </div>
-                      <p className="text-xs text-studio-text-secondary leading-relaxed">
+                      <p className="text-xs text-studio-text-secondary leading-relaxed mb-3">
                         {risk.description}
                       </p>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                          risk.confidence === 'high'
+                            ? 'bg-studio-success-light text-studio-success'
+                            : risk.confidence === 'medium'
+                              ? 'bg-studio-warning-light text-studio-warning'
+                              : 'bg-studio-critical-light text-studio-critical'
+                        }`}
+                      >
+                        {risk.confidence === 'high'
+                          ? 'High confidence'
+                          : risk.confidence === 'medium'
+                            ? 'Medium confidence'
+                            : 'Guessing — input needed'}
+                      </span>
                     </div>
                   ))}
                 </div>

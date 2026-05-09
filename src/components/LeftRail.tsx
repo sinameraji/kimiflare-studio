@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-react'
-import { sampleMission } from '../data/sample.ts'
+import { sampleMissions } from '../data/sample.ts'
 
 const statusDot: Record<string, string> = {
   pending_approval: 'bg-studio-warning',
@@ -8,9 +8,22 @@ const statusDot: Record<string, string> = {
   failed: 'bg-studio-critical',
 }
 
-export default function LeftRail() {
+const phaseLabel: Record<string, string> = {
+  intent: 'Intent',
+  plan: 'Plan',
+  execute: 'Execute',
+  verify: 'Verify',
+}
+
+interface LeftRailProps {
+  selectedMissionId: string | null
+  onSelectMission: (id: string) => void
+  onNewMission: () => void
+}
+
+export default function LeftRail({ selectedMissionId, onSelectMission, onNewMission }: LeftRailProps) {
   return (
-    <aside className="w-52 bg-studio-surface flex flex-col h-full border-r border-studio-elevated">
+    <aside className="w-60 bg-studio-surface flex flex-col h-full border-r border-studio-elevated">
       {/* Header */}
       <div className="px-4 py-4">
         <div className="flex items-center gap-2.5">
@@ -30,16 +43,30 @@ export default function LeftRail() {
           Missions
         </span>
         <div className="space-y-0.5">
-          <button className="w-full flex items-center gap-2 px-2 py-2 rounded-md bg-studio-elevated text-studio-text text-xs text-left">
-            <div className={`w-1.5 h-1.5 rounded-full ${statusDot[sampleMission.status]}`} />
-            <span className="flex-1 truncate">{sampleMission.title}</span>
-          </button>
+          {sampleMissions.map((mission) => (
+            <button
+              key={mission.id}
+              onClick={() => onSelectMission(mission.id)}
+              className={`w-full flex items-center gap-2 px-2 py-2 rounded-md text-xs text-left transition-colors ${
+                selectedMissionId === mission.id
+                  ? 'bg-studio-elevated text-studio-text'
+                  : 'text-studio-text-secondary hover:bg-studio-elevated/50'
+              }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${statusDot[mission.status]}`} />
+              <span className="flex-1 truncate">{mission.title}</span>
+              <span className="text-[10px] text-studio-text-tertiary">{phaseLabel[mission.phase]}</span>
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Footer */}
       <div className="px-3 py-3 border-t border-studio-elevated">
-        <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-studio-elevated text-studio-text-secondary text-xs transition-colors">
+        <button
+          onClick={onNewMission}
+          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-studio-elevated text-studio-text-secondary text-xs transition-colors"
+        >
           <Plus className="w-3.5 h-3.5" />
           <span>New Mission</span>
         </button>
