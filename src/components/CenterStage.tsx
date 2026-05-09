@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Target,
   FileText,
@@ -13,13 +13,13 @@ import {
   Lock,
   Radio,
 } from 'lucide-react'
-import { sampleMission, samplePlan, sampleActivity } from '../data/sample.ts'
 import ArchitectureDiagram from './ArchitectureDiagram.tsx'
 import MissionReport from './MissionReport.tsx'
 import IntentBuilder from './IntentBuilder.tsx'
 import { useMentalModels } from '../hooks/useMentalModels.ts'
 import { useHarness } from '../hooks/useHarness.ts'
-import { buildPlanPrompt } from '../utils/promptBuilder.ts'
+import { useMission, type MissionPhase } from '../hooks/useMission.ts'
+import { buildPlanPrompt, buildExecutePrompt } from '../utils/promptBuilder.ts'
 
 const phases = [
   { id: 'intent', label: 'Intent', icon: Target },
@@ -155,21 +155,34 @@ interface CenterStageProps {
 }
 
 export default function CenterStage({ missionId }: CenterStageProps) {
-  const [activePhase, setActivePhase] = useState('plan')
   const [approvalLevel, setApprovalLevel] = useState(50)
   const [showReport, setShowReport] = useState(false)
   const { sections, exportToYaml, updateFromYaml, resetToDefaults } = useMentalModels()
   const harness = useHarness()
+  const mission = useMission(missionId)
 
-  // TODO: load mission data by missionId
-  void missionId
+  // Feed harness events into mission state
+  const processedCountRef = useRef(0)
+  useEffect(() => {
+    const newEvents = harness.events.slice(processedCountRef.current)
+    newEvents.forEach((event) => mission.processEvent(event))
+    processedCountRef.current = harness.events.length
+  }, [harness.events, mission.processEvent])
+
+  const activePhase = mission.mission?.phase || 'plan'
+  const plan = mission.mission?.plan
+  const activity = mission.mission?.activity || []
+  const usage = mission.mission?.usage
 
   return (
     <main className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-[840px] mx-auto px-8 py-10">
-          <Stepper activePhase={activePhase} onChange={setActivePhase} />
+          <Stepper
+            activePhase={activePhase}
+            onChange={(id) => mission.updatePhase(id as MissionPhase)}
+          />
 
           {activePhase === 'plan' && (
             <div>
@@ -186,16 +199,16 @@ export default function CenterStage({ missionId }: CenterStageProps) {
                 <div className="flex items-center gap-4 text-xs text-studio-text-tertiary">
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3 h-3" />
-                    {samplePlan.costProjection.timeEstimate}
+                    {plan?.costProjection.timeEstimate || '—'}
                   </span>
                   <span className="flex items-center gap-1.5 text-studio-cost">
                     <DollarSign className="w-3 h-3" />
-                    ~{sampleMission.estimatedCost}
+                    ~{usage?.cost.toFixed(2) || '0.00'}
                   </span>
                 </div>
               </div>
               <h2 className="text-2xl font-semibold text-studio-text tracking-tight mb-8">
-                {sampleMission.title}
+                {mission.mission?.title || 'Untitled Mission'}
               </h2>
 
               {/* Approach */}
@@ -210,116 +223,123 @@ export default function CenterStage({ missionId }: CenterStageProps) {
                 </div>
                 <div className="bg-studio-surface rounded-xl p-6 border border-studio-elevated">
                   <p className="text-sm text-studio-text-secondary leading-relaxed">
-                    {samplePlan.approach}
+                    {plan?.approach || 'No plan generated yet.'}
                   </p>
                 </div>
               </div>
 
               {/* Architecture Diagram */}
-              <div className="mb-8">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-3">
-                  Architecture Delta
-                </span>
-                <ArchitectureDiagram
-                  before={samplePlan.architectureDelta.before}
-                  after={samplePlan.architectureDelta.after}
-                />
-              </div>
+              {plan?.architectureDelta && (
+                <div className="mb-8">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-3">
+                    Architecture Delta
+                  </span>
+                  <ArchitectureDiagram
+                    before={plan.architectureDelta.before}
+                    after={plan.architectureDelta.after}
+                  />
+                </div>
+              )}
 
               {/* Risk Assessment */}
-              <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <AlertTriangle className="w-4 h-4 text-studio-warning" />
-                  <span className="text-sm font-medium text-studio-text">Risk Assessment</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-studio-critical-light text-studio-critical font-medium">
-                    1 high, 1 medium
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  {samplePlan.risks.map((risk, i) => (
-                    <div
-                      key={i}
-                      className={`bg-studio-surface rounded-xl p-5 border ${
-                        risk.level === 'low'
-                          ? 'border-studio-success/30'
-                          : risk.level === 'medium'
-                            ? 'border-studio-warning/30'
-                            : 'border-studio-critical/30'
-                      } ${risk.confidence === 'medium' ? 'border-l-4 border-l-studio-warning' : ''}`}
-                    >
-                      <div className="flex items-center gap-2 mb-3">
-                        <div
-                          className={`${
-                            risk.level === 'low'
-                              ? 'text-studio-success'
-                              : risk.level === 'medium'
-                                ? 'text-studio-warning'
-                                : 'text-studio-critical'
-                          }`}
-                        >
-                          {riskIcons[risk.category]}
+              {plan && plan.risks.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <AlertTriangle className="w-4 h-4 text-studio-warning" />
+                    <span className="text-sm font-medium text-studio-text">Risk Assessment</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-studio-critical-light text-studio-critical font-medium">
+                      {plan.risks.filter((r) => r.level === 'high').length} high,{' '}
+                      {plan.risks.filter((r) => r.level === 'medium').length} medium
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {plan.risks.map((risk, i) => (
+                      <div
+                        key={i}
+                        className={`bg-studio-surface rounded-xl p-5 border ${
+                          risk.level === 'low'
+                            ? 'border-studio-success/30'
+                            : risk.level === 'medium'
+                              ? 'border-studio-warning/30'
+                              : 'border-studio-critical/30'
+                        } ${risk.confidence === 'medium' ? 'border-l-4 border-l-studio-warning' : ''}`}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <div
+                            className={`${
+                              risk.level === 'low'
+                                ? 'text-studio-success'
+                                : risk.level === 'medium'
+                                  ? 'text-studio-warning'
+                                  : 'text-studio-critical'
+                            }`}
+                          >
+                            {riskIcons[risk.category] || <Activity className="w-3.5 h-3.5" />}
+                          </div>
+                          <span className="text-xs font-medium text-studio-text">{risk.category}</span>
+                          <span
+                            className={`text-[10px] uppercase font-bold ml-auto ${
+                              risk.level === 'low'
+                                ? 'text-studio-success'
+                                : risk.level === 'medium'
+                                  ? 'text-studio-warning'
+                                  : 'text-studio-critical'
+                            }`}
+                          >
+                            {risk.level}
+                          </span>
                         </div>
-                        <span className="text-xs font-medium text-studio-text">{risk.category}</span>
+                        <p className="text-xs text-studio-text-secondary leading-relaxed mb-3">
+                          {risk.description}
+                        </p>
                         <span
-                          className={`text-[10px] uppercase font-bold ml-auto ${
-                            risk.level === 'low'
-                              ? 'text-studio-success'
-                              : risk.level === 'medium'
-                                ? 'text-studio-warning'
-                                : 'text-studio-critical'
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                            risk.confidence === 'high'
+                              ? 'bg-studio-success-light text-studio-success'
+                              : risk.confidence === 'medium'
+                                ? 'bg-studio-warning-light text-studio-warning'
+                                : 'bg-studio-critical-light text-studio-critical'
                           }`}
                         >
-                          {risk.level}
+                          {risk.confidence === 'high'
+                            ? 'High confidence'
+                            : risk.confidence === 'medium'
+                              ? 'Medium confidence'
+                              : 'Guessing — input needed'}
                         </span>
                       </div>
-                      <p className="text-xs text-studio-text-secondary leading-relaxed mb-3">
-                        {risk.description}
-                      </p>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                          risk.confidence === 'high'
-                            ? 'bg-studio-success-light text-studio-success'
-                            : risk.confidence === 'medium'
-                              ? 'bg-studio-warning-light text-studio-warning'
-                              : 'bg-studio-critical-light text-studio-critical'
-                        }`}
-                      >
-                        {risk.confidence === 'high'
-                          ? 'High confidence'
-                          : risk.confidence === 'medium'
-                            ? 'Medium confidence'
-                            : 'Guessing — input needed'}
-                      </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Cost Projection */}
-              <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <DollarSign className="w-4 h-4 text-studio-cost" />
-                  <span className="text-sm font-medium text-studio-text">Cost Projection</span>
+              {plan && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <DollarSign className="w-4 h-4 text-studio-cost" />
+                    <span className="text-sm font-medium text-studio-text">Cost Projection</span>
+                  </div>
+                  <div className="bg-studio-surface rounded-xl p-6 grid grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-xl font-semibold text-studio-text">{plan.costProjection.tokens}</div>
+                      <div className="text-[11px] text-studio-text-secondary mt-1">Tokens</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl font-semibold text-studio-cost">{plan.costProjection.apiCost}</div>
+                      <div className="text-[11px] text-studio-text-secondary mt-1">API Cost</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl font-semibold text-studio-text">{plan.costProjection.infrastructure}</div>
+                      <div className="text-[11px] text-studio-text-secondary mt-1">Infrastructure</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl font-semibold text-studio-text">{plan.costProjection.timeEstimate}</div>
+                      <div className="text-[11px] text-studio-text-secondary mt-1">Time Estimate</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-studio-surface rounded-xl p-6 grid grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-xl font-semibold text-studio-text">{samplePlan.costProjection.tokens}</div>
-                    <div className="text-[11px] text-studio-text-secondary mt-1">Tokens</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-semibold text-studio-cost">{samplePlan.costProjection.apiCost}</div>
-                    <div className="text-[11px] text-studio-text-secondary mt-1">API Cost</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-semibold text-studio-text">{samplePlan.costProjection.infrastructure}</div>
-                    <div className="text-[11px] text-studio-text-secondary mt-1">Infrastructure</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-semibold text-studio-text">{samplePlan.costProjection.timeEstimate}</div>
-                    <div className="text-[11px] text-studio-text-secondary mt-1">Time Estimate</div>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -330,6 +350,8 @@ export default function CenterStage({ missionId }: CenterStageProps) {
               onUpdateYaml={updateFromYaml}
               onResetDefaults={resetToDefaults}
               onGenerate={(prompt) => {
+                mission.setTitle(prompt.slice(0, 80))
+                mission.setIntent(prompt)
                 const planPrompt = buildPlanPrompt({
                   goal: prompt,
                   constraints: [],
@@ -337,7 +359,7 @@ export default function CenterStage({ missionId }: CenterStageProps) {
                   contextScope: 'all',
                 })
                 harness.sendPrompt(planPrompt, { mode: 'plan' }).catch(console.error)
-                setActivePhase('plan')
+                mission.updatePhase('plan')
               }}
             />
           )}
@@ -377,34 +399,46 @@ export default function CenterStage({ missionId }: CenterStageProps) {
                 </div>
               )}
 
+              {/* Activity Log */}
               <div className="bg-studio-surface rounded-xl p-6 space-y-4 border border-studio-elevated">
-                {sampleActivity.map((item) => (
+                {activity.map((item) => (
                   <div key={item.id} className="flex items-start gap-3">
                     <div
                       className={`w-1.5 h-1.5 rounded-full mt-1.5 ${
-                        item.type === 'warning'
-                          ? 'bg-studio-warning'
-                          : item.type === 'info'
-                            ? 'bg-studio-info'
+                        item.type === 'error'
+                          ? 'bg-studio-critical'
+                          : item.type === 'steer'
+                            ? 'bg-studio-warning'
                             : 'bg-studio-primary'
                       }`}
                     />
                     <div className="flex-1">
-                      <p className="text-sm text-studio-text">{item.action}</p>
-                      <span className="text-[11px] text-studio-text-tertiary">{item.time}</span>
+                      <p className="text-sm text-studio-text">
+                        {typeof item.payload === 'object' &&
+                        item.payload !== null &&
+                        'action' in item.payload
+                          ? String((item.payload as Record<string, unknown>).action)
+                          : String(item.type)}
+                      </p>
+                      <span className="text-[11px] text-studio-text-tertiary">
+                        {new Date(item.timestamp).toLocaleTimeString()}
+                      </span>
                     </div>
                   </div>
                 ))}
-                <div className="flex items-center gap-2 pt-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-studio-primary animate-pulse" />
-                  <span className="text-sm text-studio-text-tertiary animate-pulse">Working...</span>
-                </div>
+                {harness.isConnected && activity.length === 0 && (
+                  <div className="flex items-center gap-2 pt-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-studio-primary animate-pulse" />
+                    <span className="text-sm text-studio-text-tertiary animate-pulse">Working…</span>
+                  </div>
+                )}
               </div>
+
               {/* Steer Input */}
               <div className="mt-4 flex gap-2">
                 <input
                   type="text"
-                  placeholder="Steer the agent mid-flight..."
+                  placeholder="Steer the agent mid-flight…"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       const value = (e.target as HTMLInputElement).value
@@ -425,7 +459,7 @@ export default function CenterStage({ missionId }: CenterStageProps) {
               </div>
 
               <button
-                onClick={() => setActivePhase('verify')}
+                onClick={() => mission.updatePhase('verify')}
                 className="w-full mt-4 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors"
               >
                 Mark Complete & Verify
@@ -460,16 +494,27 @@ export default function CenterStage({ missionId }: CenterStageProps) {
         <ApprovalBar
           approvalLevel={approvalLevel}
           setApprovalLevel={setApprovalLevel}
-          onRequestChanges={() => setActivePhase('intent')}
+          onRequestChanges={() => mission.updatePhase('intent')}
           onExecutePlan={() => {
-            const executePrompt = `The following plan has been approved. Execute it now.\nYou may read, write, edit, and execute files as needed.\n\n## Approved Plan\n${samplePlan.approach}\n\n## Constraints\n- Follow the approved approach. Do not deviate without good reason.\n- If you encounter unexpected complexity, pause and summarize before continuing.\n- Run tests after making changes if a test suite exists.`
+            mission.parsePlan()
+            const executePrompt = buildExecutePrompt({
+              approach: mission.mission?.plan?.approach || '',
+            })
             harness.sendPrompt(executePrompt, { mode: 'edit' }).catch(console.error)
-            setActivePhase('execute')
+            mission.updatePhase('execute')
           }}
         />
       )}
 
-      {showReport && <MissionReport onClose={() => setShowReport(false)} />}
+      {showReport && mission.mission && (
+        <MissionReport
+          mission={mission.mission}
+          plan={mission.mission.plan}
+          autonomyLevel={approvalLevel}
+          hoursSaved={6}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </main>
   )
 }
