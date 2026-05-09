@@ -1,5 +1,4 @@
-import { Plus } from 'lucide-react'
-import { sampleMissions } from '../data/sample.ts'
+import { Plus, Radio } from 'lucide-react'
 
 const statusDot: Record<string, string> = {
   pending_approval: 'bg-studio-warning',
@@ -15,13 +14,30 @@ const phaseLabel: Record<string, string> = {
   verify: 'Verify',
 }
 
+export interface MissionItem {
+  id: string
+  title: string
+  phase: string
+  status: string
+  harnessId: string
+  updatedAt: number
+}
+
 interface LeftRailProps {
+  missions: MissionItem[]
   selectedMissionId: string | null
   onSelectMission: (id: string) => void
   onNewMission: () => void
+  isHarnessConnected?: boolean
 }
 
-export default function LeftRail({ selectedMissionId, onSelectMission, onNewMission }: LeftRailProps) {
+export default function LeftRail({
+  missions,
+  selectedMissionId,
+  onSelectMission,
+  onNewMission,
+  isHarnessConnected,
+}: LeftRailProps) {
   return (
     <aside className="w-60 bg-studio-surface flex flex-col h-full border-r border-studio-elevated">
       {/* Header */}
@@ -29,45 +45,56 @@ export default function LeftRail({ selectedMissionId, onSelectMission, onNewMiss
         <div className="flex items-center gap-2.5">
           <img src="/logo.png" alt="KimiFlare" className="w-7 h-7 rounded-md object-cover" />
           <div>
-            <h1 className="font-semibold text-sm text-studio-text leading-tight">KimiFlare</h1>
-            <p className="text-[11px] text-studio-text-tertiary leading-tight">Studio</p>
+            <h1 className="text-sm font-semibold text-studio-text tracking-tight">KimiFlare</h1>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <Radio className={`w-3 h-3 ${isHarnessConnected ? 'text-studio-success' : 'text-studio-text-tertiary'}`} />
+              <span className="text-[10px] text-studio-text-tertiary">
+                {isHarnessConnected ? 'Harness online' : 'No harness'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Mission Queue */}
+      {/* New Mission */}
+      <div className="px-3 pb-3">
+        <button
+          onClick={onNewMission}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-studio-primary text-white text-xs font-medium hover:bg-studio-primary-light transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          New Mission
+        </button>
+      </div>
+
+      {/* Mission List */}
       <div className="flex-1 overflow-y-auto px-3">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary px-2 block mb-2">
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary px-1 mb-2">
           Missions
-        </span>
-        <div className="space-y-0.5">
-          {sampleMissions.map((mission) => (
+        </div>
+        <div className="space-y-1">
+          {missions.map((mission) => (
             <button
               key={mission.id}
               onClick={() => onSelectMission(mission.id)}
-              className={`w-full flex items-center gap-2 px-2 py-2 rounded-md text-xs text-left transition-colors ${
+              className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors ${
                 selectedMissionId === mission.id
-                  ? 'bg-studio-elevated text-studio-text'
-                  : 'text-studio-text-secondary hover:bg-studio-elevated/50'
+                  ? 'bg-studio-primary/10 border border-studio-primary/20'
+                  : 'hover:bg-studio-elevated-hover/30 border border-transparent'
               }`}
             >
-              <div className={`w-1.5 h-1.5 rounded-full ${statusDot[mission.status]}`} />
-              <span className="flex-1 truncate">{mission.title}</span>
-              <span className="text-[10px] text-studio-text-tertiary">{phaseLabel[mission.phase]}</span>
+              <div className="flex items-center gap-2 mb-1">
+                <div className={`w-1.5 h-1.5 rounded-full ${statusDot[mission.status] || 'bg-studio-text-tertiary'}`} />
+                <span className="text-xs font-medium text-studio-text truncate">{mission.title}</span>
+              </div>
+              <div className="flex items-center gap-2 ml-3.5">
+                <span className="text-[10px] text-studio-text-tertiary">{phaseLabel[mission.phase] || mission.phase}</span>
+                <span className="text-[10px] text-studio-text-tertiary">·</span>
+                <span className="text-[10px] text-studio-text-tertiary capitalize">{mission.harnessId}</span>
+              </div>
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="px-3 py-3 border-t border-studio-elevated">
-        <button
-          onClick={onNewMission}
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-studio-elevated text-studio-text-secondary text-xs transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>New Mission</span>
-        </button>
       </div>
     </aside>
   )

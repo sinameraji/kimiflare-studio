@@ -49,9 +49,20 @@ export default function App() {
       {view === 'mission' && (
         <>
           <LeftRail
+            missions={[
+              {
+                id: 'mission-001',
+                title: 'Current Mission',
+                phase: 'plan',
+                status: 'in_progress',
+                harnessId: harness.state?.currentModel ? 'kimiflare' : 'none',
+                updatedAt: Date.now(),
+              },
+            ]}
             selectedMissionId={selectedMissionId}
             onSelectMission={(id) => setSelectedMissionId(id)}
             onNewMission={() => setSelectedMissionId(null)}
+            isHarnessConnected={harness.isConnected}
           />
           {selectedMissionId ? (
             <CenterStage missionId={selectedMissionId} />
