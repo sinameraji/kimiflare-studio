@@ -271,6 +271,12 @@ export function useMission(missionId: string | null) {
         }
         break
       }
+      case 'message.end': {
+        if (currentPhase === 'plan') {
+          parsePlan()
+        }
+        break
+      }
       case 'usage': {
         setMission((prev) => {
           if (!prev) return prev
