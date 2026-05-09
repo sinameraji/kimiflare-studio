@@ -16,7 +16,7 @@ const createWindow = () => {
     titleBarStyle: 'hiddenInset',
     icon: path.join(__dirname, '../public/logo.png'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, '../../preload/electron/preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
     },

@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist-electron",
+    "outDir": "dist-electron/main",
     "noEmit": false,
     "allowImportingTsExtensions": false,
     "lib": ["ES2022"],

@@ -1,12 +1,13 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist-electron",
+    "outDir": "dist-electron/preload",
     "noEmit": false,
     "allowImportingTsExtensions": false,
     "lib": ["ES2022"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
     "jsx": "preserve",
     "strict": true
   },
