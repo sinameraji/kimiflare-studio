@@ -83,11 +83,16 @@ export default function App() {
   }, [fs])
 
   const handleNewMission = useCallback(async () => {
+    const lastConfig = await config.get<HarnessConfig & { cwd?: string }>(LAST_CONFIG_KEY)
+    const lastWorkspace = await config.get<string>(LAST_WORKSPACE_KEY)
+    const workspacePath = lastWorkspace || lastConfig?.cwd || ''
+    const harnessId = lastConfig?.harnessId || 'kimiflare'
+
     const mission = await missions.createMission({
       id: `mission-${Date.now()}`,
       title: 'New Mission',
-      workspacePath: '',
-      harnessId: 'kimiflare',
+      workspacePath,
+      harnessId,
       phase: 'intent',
       status: 'pending_approval',
       intent: '',
@@ -96,7 +101,7 @@ export default function App() {
       fileChanges: [],
     })
     setSelectedMissionId(mission.id)
-  }, [missions])
+  }, [missions, config])
 
   if (isRestoring) {
     return (
