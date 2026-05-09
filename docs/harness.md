@@ -372,51 +372,69 @@ class PiHarness implements IHarness {
 **Package**: `kimiflare` (with `kimiflare/sdk` export)  
 **Binary**: `kimiflare` (global CLI)
 
-**Integration mode**: In-process SDK (preferred), identical shape to Pi.
+**Integration mode**: Dual — in-process SDK (preferred) or RPC subprocess (fallback).
 
 ```typescript
 // electron/harness/KimiFlareHarness.ts
 
 import { createAgentSession } from 'kimiflare/sdk';
+import { spawn } from 'node:child_process';
 
 class KimiFlareHarness implements IHarness {
   private session?: KimiFlareSession;
+  private rpcProc?: ChildProcess;
+  private mode: 'sdk' | 'rpc' | null = null;
 
   async start(options: HarnessStartOptions) {
-    const { session } = await createAgentSession({
+    // Try in-process SDK first
+    try {
+      const { session } = await createAgentSession({
+        cwd: options.cwd,
+        config: options.config as KimiConfig,
+      });
+      this.session = session;
+      this.mode = 'sdk';
+      session.subscribe((event) => this.emit(this.normalizeEvent(event)));
+      return;
+    } catch {
+      // Fall back to RPC subprocess
+    }
+
+    // RPC fallback: spawn kimiflare --mode rpc
+    this.rpcProc = spawn('node', ['node_modules/kimiflare/bin/kimiflare.mjs', '--mode', 'rpc'], {
       cwd: options.cwd,
-      config: options.config as KimiConfig,
-      // mode, memory, lsp, etc.
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    this.mode = 'rpc';
+
+    this.rpcProc.stdout!.on('data', (chunk) => {
+      for (const line of chunk.toString().split('\n')) {
+        if (!line.trim()) continue;
+        const event = JSON.parse(line);
+        this.emit(this.normalizeEvent(event));
+      }
     });
 
-    this.session = session;
-
-    session.subscribe((event) => {
-      this.emit(this.normalizeEvent(event));
-    });
+    this.rpcProc.stdin!.write(JSON.stringify({ type: 'new_session', config: options.config }) + '\n');
   }
 
   async sendPrompt(prompt: string, options?: PromptOptions) {
-    await this.session!.prompt(prompt, { mode: options?.mode });
+    if (this.mode === 'sdk') {
+      await this.session!.prompt(prompt, { mode: options?.mode });
+    } else {
+      this.rpcProc!.stdin!.write(JSON.stringify({ type: 'prompt', message: prompt }) + '\n');
+    }
   }
 
   async steer(message: string) {
-    await this.session!.steer(message);
+    if (this.mode === 'sdk') {
+      await this.session!.steer(message);
+    } else {
+      this.rpcProc!.stdin!.write(JSON.stringify({ type: 'steer', message }) + '\n');
+    }
   }
 
-  async followUp(message: string) {
-    await this.session!.followUp(message);
-  }
-
-  async abort() {
-    await this.session!.abort();
-  }
-
-  async setModel(modelId: string) {
-    this.session!.setModel(modelId);
-  }
-
-  // ... normalizeEvent maps KimiFlare SessionEvent to HarnessEvent
+  // ... abort, followUp, setModel, listModels, approvePermission
 }
 ```
 
@@ -437,10 +455,11 @@ class KimiFlareHarness implements IHarness {
 | `status` | `status` |
 
 **KimiFlare quirks**:
+- **Dual-mode support**: In-process SDK (zero IPC overhead, TypeScript/Node only) or RPC subprocess (process isolation, any JSONL-speaking language). The harness auto-detects: SDK first, RPC fallback.
 - Native plan/edit/auto modes. We can pass `mode: 'plan'` to `session.prompt()` and the SDK will block mutating tools.
-- Native permission gating via `askPermission` callback. The SDK emits `permission.request` events.
+- Native permission gating via `askPermission` callback. The SDK emits `permission.request` events. In RPC mode, permissions are resolved via `resolve_permission` JSONL command.
 - Cloud mode support built-in. If the user selects KimiFlare Cloud, the SDK handles device auth and token proxying.
-- If the SDK is not available (e.g., user hasn't installed `kimiflare`), fall back to spawning `kimiflare --mode rpc` and using JSONL over stdio.
+- RPC binary resolution: local `node_modules/kimiflare/bin/kimiflare.mjs` first, then global `npx which kimiflare`.
 
 ---
 
@@ -1096,7 +1115,7 @@ ${approvedPlan.approach}
 - [x] Add KimiFlare event normalizer (`normalizeKimiFlareEvent` in `KimiFlareHarness.ts`)
 - [x] Config form is generic (provider, model, API key) — works for KimiFlare
 - [x] Test plan/steer/execute flow with KimiFlare SDK (wired in `CenterStage.tsx`)
-- [ ] Test fallback to `kimiflare --mode rpc` if SDK not available
+- [x] Test fallback to `kimiflare --mode rpc` if SDK not available (RPC subprocess with JSONL over stdio)
 
 ### Phase 5: Mission Persistence & Polish (Week 5) ✅ DONE
 - [x] Create `electron/store/missionStore.ts` (in-memory only; SQLite migration pending)
@@ -1135,11 +1154,11 @@ ${approvedPlan.approach}
 
 | Package | Version | Purpose | Where | Status |
 |---------|---------|---------|-------|--------|
-| `@opencode-ai/sdk` | `latest` | OpenCode HTTP client | `electron/harness/OpenCodeHarness.ts` | Not installed yet |
-| `@earendil-works/pi-coding-agent` | `^0.74.0` | Pi in-process SDK | `electron/harness/PiHarness.ts` | Not installed yet |
-| `kimiflare` | `^0.49.0` | KimiFlare SDK | `electron/harness/KimiFlareHarness.ts` | Optional — declared via `.d.ts`, imported dynamically |
+| `@opencode-ai/sdk` | `^1.14.41` | OpenCode HTTP client + SSE | `electron/harness/OpenCodeHarness.ts` | **Installed** (optional) |
+| `@earendil-works/pi-coding-agent` | `^0.74.0` | Pi in-process SDK | `electron/harness/PiHarness.ts` | **Installed** (optional) |
+| `kimiflare` | `^0.49.0` | KimiFlare SDK + RPC binary | `electron/harness/KimiFlareHarness.ts` | **Installed** (optional) |
 | `chokidar` | `^5.0.0` | File watching | `electron/fs/watcher.ts` | **Installed** (runtime dep) |
-| `better-sqlite3` | `^12.0.0` | Mission store | `electron/store/missionStore.ts` | Not installed yet |
+| `better-sqlite3` | `^12.9.0` | Mission store | `electron/store/missionStore.ts` | **Installed** (runtime dep) |
 
 Harness packages should be **optional dependencies** (`optionalDependencies` in `package.json`) so the app can still run if a harness is not installed.
 
