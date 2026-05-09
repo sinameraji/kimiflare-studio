@@ -9,17 +9,19 @@ declare module '@earendil-works/pi-coding-agent' {
     listModels(): Promise<Array<{ id: string; name: string; provider: string }>>
   }
 
-  export interface AuthStorage {
+  export class AuthStorage {
+    static create(): AuthStorage
     get(key: string): Promise<string | undefined>
     set(key: string, value: string): Promise<void>
   }
 
-  export interface ModelRegistry {
+  export class ModelRegistry {
+    static create(authStorage: AuthStorage): ModelRegistry
     list(): Promise<Array<{ id: string; name: string; provider: string }>>
   }
 
-  export interface SessionManager {
-    inMemory(): SessionManager
+  export class SessionManager {
+    static inMemory(): SessionManager
   }
 
   export interface CreateAgentSessionOptions {
@@ -35,16 +37,4 @@ declare module '@earendil-works/pi-coding-agent' {
   export function createAgentSession(
     options: CreateAgentSessionOptions,
   ): Promise<{ session: PiSession }>
-
-  export function AuthStorage: {
-    create(): AuthStorage
-  }
-
-  export function ModelRegistry: {
-    create(authStorage: AuthStorage): ModelRegistry
-  }
-
-  export function SessionManager: {
-    inMemory(): SessionManager
-  }
 }

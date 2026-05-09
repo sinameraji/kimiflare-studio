@@ -51,7 +51,7 @@ class OpenCodeHarness implements IHarness {
     this.server = await opencodeSdk.createOpencodeServer({
       hostname: '127.0.0.1',
       port: 0,
-      config: options.config as Record<string, unknown>,
+      config: options.config as unknown as Record<string, unknown>,
     })
 
     this.client = opencodeSdk.createOpencodeClient({ baseUrl: this.server.url })
