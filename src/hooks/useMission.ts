@@ -7,6 +7,7 @@ import type {
   ArchitectureDelta,
 } from '../../electron/store/missionStore.js'
 import type { HarnessEvent } from '../types/harness.ts'
+import { createAnomalyDetector, type Anomaly } from '../utils/anomalyDetection.ts'
 
 export type MissionPhase = 'intent' | 'plan' | 'execute' | 'verify' | 'complete' | 'rolled_back'
 
@@ -100,15 +101,19 @@ function parsePlanFromText(text: string): PlanData {
 
 export function useMission(missionId: string | null) {
   const [mission, setMission] = useState<Mission | null>(null)
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([])
   const planTextRef = useRef('')
   const missionRef = useRef(mission)
   missionRef.current = mission
+  const detectorRef = useRef(createAnomalyDetector())
 
   // Initialise or clear mission when missionId changes
   useEffect(() => {
     if (!missionId) {
       setMission(null)
+      setAnomalies([])
       planTextRef.current = ''
+      detectorRef.current.reset()
       return
     }
     setMission({
@@ -124,7 +129,9 @@ export function useMission(missionId: string | null) {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })
+    setAnomalies([])
     planTextRef.current = ''
+    detectorRef.current.reset()
   }, [missionId])
 
   const updatePhase = useCallback((phase: MissionPhase) => {
@@ -163,8 +170,21 @@ export function useMission(missionId: string | null) {
     setMission((prev) => (prev ? { ...prev, plan, updatedAt: Date.now() } : prev))
   }, [])
 
+  const recordFileChange = useCallback((path: string) => {
+    const anomaly = detectorRef.current.recordFileChange(path)
+    if (anomaly) {
+      setAnomalies((prev) => [...prev, anomaly])
+    }
+  }, [])
+
   const processEvent = useCallback((event: HarnessEvent) => {
     const currentPhase = missionRef.current?.phase
+
+    // Run anomaly detection
+    const anomaly = detectorRef.current.processEvent(event)
+    if (anomaly) {
+      setAnomalies((prev) => [...prev, anomaly])
+    }
 
     switch (event.type) {
       case 'message.delta': {
@@ -240,6 +260,7 @@ export function useMission(missionId: string | null) {
 
   return {
     mission,
+    anomalies,
     updatePhase,
     updateStatus,
     setTitle,
@@ -249,6 +270,7 @@ export function useMission(missionId: string | null) {
     accumulatePlanDelta,
     parsePlan,
     processEvent,
+    recordFileChange,
     setMission,
   }
 }

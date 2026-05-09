@@ -104,7 +104,7 @@ export default function App() {
             isHarnessConnected={harness.isConnected}
           />
           {selectedMissionId ? (
-            <CenterStage missionId={selectedMissionId} />
+            <CenterStage missionId={selectedMissionId} fileChanges={fs.changes} />
           ) : (
             <WelcomeScreen onStartMission={handleStartOnboarding} />
           )}

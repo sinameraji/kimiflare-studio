@@ -12,6 +12,7 @@ import {
   Activity,
   Lock,
   Radio,
+  AlertOctagon,
 } from 'lucide-react'
 import ArchitectureDiagram from './ArchitectureDiagram.tsx'
 import MissionReport from './MissionReport.tsx'
@@ -20,6 +21,7 @@ import { useMentalModels } from '../hooks/useMentalModels.ts'
 import { useHarness } from '../hooks/useHarness.ts'
 import { useMission, type MissionPhase } from '../hooks/useMission.ts'
 import { buildPlanPrompt, buildExecutePrompt } from '../utils/promptBuilder.ts'
+import type { FileChangeEvent } from '../types/harness.ts'
 
 const phases = [
   { id: 'intent', label: 'Intent', icon: Target },
@@ -152,9 +154,10 @@ function ApprovalBar({
 
 interface CenterStageProps {
   missionId: string
+  fileChanges?: FileChangeEvent[]
 }
 
-export default function CenterStage({ missionId }: CenterStageProps) {
+export default function CenterStage({ missionId, fileChanges = [] }: CenterStageProps) {
   const [approvalLevel, setApprovalLevel] = useState(50)
   const [showReport, setShowReport] = useState(false)
   const { sections, exportToYaml, updateFromYaml, resetToDefaults } = useMentalModels()
@@ -169,10 +172,19 @@ export default function CenterStage({ missionId }: CenterStageProps) {
     processedCountRef.current = harness.events.length
   }, [harness.events, mission.processEvent])
 
+  // Feed file changes into anomaly detector
+  const processedFilesRef = useRef(0)
+  useEffect(() => {
+    const newChanges = fileChanges.slice(processedFilesRef.current)
+    newChanges.forEach((change) => mission.recordFileChange(change.path))
+    processedFilesRef.current = fileChanges.length
+  }, [fileChanges, mission.recordFileChange])
+
   const activePhase = mission.mission?.phase || 'plan'
   const plan = mission.mission?.plan
   const activity = mission.mission?.activity || []
   const usage = mission.mission?.usage
+  const anomalies = mission.anomalies
 
   return (
     <main className="flex-1 flex flex-col h-full overflow-hidden">
@@ -373,6 +385,30 @@ export default function CenterStage({ missionId }: CenterStageProps) {
                   {harness.isConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
+
+              {/* Anomaly Alerts */}
+              {anomalies.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  {anomalies.slice(-3).map((anomaly) => (
+                    <div
+                      key={anomaly.id}
+                      className={`flex items-start gap-2.5 rounded-xl px-4 py-3 border ${
+                        anomaly.severity === 'critical'
+                          ? 'bg-studio-critical-light border-studio-critical/30 text-studio-critical'
+                          : 'bg-studio-warning-light border-studio-warning/30 text-studio-warning'
+                      }`}
+                    >
+                      <AlertOctagon className="w-4 h-4 mt-0.5 shrink-0" />
+                      <div>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80 block mb-0.5">
+                          {anomaly.category} anomaly
+                        </span>
+                        <p className="text-xs leading-relaxed">{anomaly.message}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Harness Event Log */}
               {harness.events.length > 0 && (
