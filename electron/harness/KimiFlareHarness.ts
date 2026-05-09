@@ -6,6 +6,7 @@ import type {
   HarnessEvent,
   ModelInfo,
   PromptOptions,
+  PermissionDecision,
 } from '../../src/types/harness.ts'
 
 let kimiflareSdk: typeof import('kimiflare/sdk') | undefined
@@ -120,7 +121,7 @@ class KimiFlareHarness implements IHarness {
     return () => this.eventListeners.delete(callback)
   }
 
-  async approvePermission(_permissionId: string, _approved: boolean): Promise<void> {
+  async approvePermission(_permissionId: string, _decision: PermissionDecision): Promise<void> {
     // KimiFlare handles permissions internally or via events
   }
 

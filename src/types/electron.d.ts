@@ -5,6 +5,7 @@ import type {
   FileChangeEvent,
   ModelInfo,
   PromptOptions,
+  PermissionDecision,
 } from './harness.ts'
 
 export interface ElectronAPI {
@@ -18,7 +19,7 @@ export interface ElectronAPI {
     getState: () => Promise<HarnessState>
     setModel: (modelId: string) => Promise<void>
     listModels: () => Promise<ModelInfo[]>
-    approvePermission: (requestId: string, approved: boolean) => Promise<void>
+    approvePermission: (requestId: string, decision: PermissionDecision) => Promise<void>
     onEvent: (callback: (event: HarnessEvent) => void) => () => void
   }
   fs: {

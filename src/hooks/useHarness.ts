@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { HarnessState, HarnessEvent, HarnessConfig, PromptOptions } from '../types/harness.ts'
+import type { HarnessState, HarnessEvent, HarnessConfig, PromptOptions, PermissionDecision } from '../types/harness.ts'
 
 export function useHarness() {
   const [state, setState] = useState<HarnessState | null>(null)
@@ -51,8 +51,8 @@ export function useHarness() {
     return window.electronAPI.harness.listModels()
   }, [])
 
-  const approvePermission = useCallback((requestId: string, approved: boolean) => {
-    return window.electronAPI.harness.approvePermission(requestId, approved)
+  const approvePermission = useCallback((requestId: string, decision: PermissionDecision) => {
+    return window.electronAPI.harness.approvePermission(requestId, decision)
   }, [])
 
   return {

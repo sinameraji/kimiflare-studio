@@ -57,10 +57,10 @@ export function registerIpcHandlers(): void {
     return harness.listModels()
   })
 
-  ipcMain.handle('harness:approvePermission', async (_, requestId, approved) => {
+  ipcMain.handle('harness:approvePermission', async (_, requestId, decision) => {
     const harness = manager.getHarness()
     if (!harness) throw new Error('No harness active')
-    await harness.approvePermission(requestId, approved)
+    await harness.approvePermission(requestId, decision)
   })
 
   // Forward harness events to all renderer windows

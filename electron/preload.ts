@@ -4,6 +4,7 @@ import type {
   HarnessEvent,
   FileChangeEvent,
   PromptOptions,
+  PermissionDecision,
 } from '../src/types/harness.ts'
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -18,8 +19,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getState: () => ipcRenderer.invoke('harness:getState'),
     setModel: (modelId: string) => ipcRenderer.invoke('harness:setModel', modelId),
     listModels: () => ipcRenderer.invoke('harness:listModels'),
-    approvePermission: (requestId: string, approved: boolean) =>
-      ipcRenderer.invoke('harness:approvePermission', requestId, approved),
+    approvePermission: (requestId: string, decision: PermissionDecision) =>
+      ipcRenderer.invoke('harness:approvePermission', requestId, decision),
     onEvent: (callback: (event: HarnessEvent) => void) => {
       const handler = (_: unknown, event: HarnessEvent) => callback(event)
       ipcRenderer.on('harness:event', handler)

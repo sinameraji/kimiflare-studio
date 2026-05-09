@@ -81,5 +81,7 @@ export interface IHarness {
 
   onEvent(callback: (event: HarnessEvent) => void): () => void
 
-  approvePermission(permissionId: string, approved: boolean): Promise<void>
+  approvePermission(permissionId: string, decision: PermissionDecision): Promise<void>
 }
+
+export type PermissionDecision = 'allow' | 'allow_session' | 'deny'

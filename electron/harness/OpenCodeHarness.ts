@@ -6,6 +6,7 @@ import type {
   HarnessEvent,
   ModelInfo,
   PromptOptions,
+  PermissionDecision,
 } from '../../src/types/harness.ts'
 
 export function createOpenCodeHarness(): IHarness {
@@ -67,7 +68,7 @@ class OpenCodeHarness implements IHarness {
     return () => this.eventListeners.delete(callback)
   }
 
-  async approvePermission(_permissionId: string, _approved: boolean): Promise<void> {
+  async approvePermission(_permissionId: string, _decision: PermissionDecision): Promise<void> {
     // no-op
   }
 
