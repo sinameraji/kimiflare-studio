@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     listModels: () => ipcRenderer.invoke('harness:listModels'),
     approvePermission: (requestId: string, decision: PermissionDecision) =>
       ipcRenderer.invoke('harness:approvePermission', requestId, decision),
+    detectConfig: (harnessId: string) => ipcRenderer.invoke('harness:detectConfig', harnessId),
     onEvent: (callback: (event: HarnessEvent) => void) => {
       const handler = (_: unknown, event: HarnessEvent) => callback(event)
       ipcRenderer.on('harness:event', handler)

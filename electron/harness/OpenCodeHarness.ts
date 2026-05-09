@@ -8,6 +8,7 @@ import type {
   PromptOptions,
   PermissionDecision,
 } from '../../src/types/harness.ts'
+import { detectOpenCodeConfig } from './detectConfig.js'
 
 let opencodeSdk: typeof import('@opencode-ai/sdk') | undefined
 
@@ -48,10 +49,27 @@ class OpenCodeHarness implements IHarness {
       )
     }
 
+    // Auto-detect existing OpenCode config and merge with any explicit overrides
+    const detected = detectOpenCodeConfig()
+    const mergedConfig: Record<string, unknown> = {
+      ...(detected ?? {}),
+      ...(options.config.provider ? { provider: options.config.provider } : {}),
+      ...(options.config.model ? { model: options.config.model } : {}),
+      ...(options.config.apiKey ? { apiKey: options.config.apiKey } : {}),
+      ...(options.config.baseUrl ? { baseUrl: options.config.baseUrl } : {}),
+    }
+
+    if (!mergedConfig.provider && !mergedConfig.model) {
+      console.warn(
+        '[OpenCodeHarness] No provider or model found in auto-detected config or explicit overrides. ' +
+          'OpenCode may fail to start. Run `opencode init` or configure ~/.config/opencode/opencode.json',
+      )
+    }
+
     this.server = await opencodeSdk.createOpencodeServer({
       hostname: '127.0.0.1',
       port: 0,
-      config: options.config as unknown as Record<string, unknown>,
+      config: mergedConfig,
     })
 
     this.client = opencodeSdk.createOpencodeClient({ baseUrl: this.server.url })

@@ -69,9 +69,22 @@ class KimiFlareHarness implements IHarness {
     if (!kimiflareSdk) throw new Error('SDK not available')
     this.mode = 'sdk'
 
+    const cfg = options.config
+    const sdkConfig: Record<string, unknown> =
+      cfg.mode === 'cloud'
+        ? {
+            githubToken: cfg.githubToken,
+            remoteWorkerUrl: cfg.remoteWorkerUrl,
+          }
+        : {
+            accountId: cfg.accountId,
+            apiToken: cfg.apiToken,
+            model: cfg.model || '@cf/moonshotai/kimi-k2.6',
+          }
+
     const { session } = await kimiflareSdk.createAgentSession({
       cwd: options.cwd,
-      config: options.config as unknown as Record<string, unknown>,
+      config: sdkConfig,
     })
 
     this.session = session as KimiFlareSessionLike
@@ -104,16 +117,26 @@ class KimiFlareHarness implements IHarness {
       )
     }
 
+    const cfg = options.config
+    const rpcEnv: Record<string, string> = {
+      ...process.env,
+      KIMIFLARE_MODEL: cfg.model || '@cf/moonshotai/kimi-k2.6',
+    }
+
+    if (cfg.mode === 'cloud') {
+      rpcEnv.KIMIFLARE_MODE = 'cloud'
+      rpcEnv.KIMIFLARE_GITHUB_TOKEN = cfg.githubToken || ''
+      rpcEnv.KIMIFLARE_REMOTE_WORKER_URL = cfg.remoteWorkerUrl || ''
+    } else {
+      rpcEnv.KIMIFLARE_MODE = 'direct'
+      rpcEnv.KIMIFLARE_ACCOUNT_ID = cfg.accountId || ''
+      rpcEnv.KIMIFLARE_API_TOKEN = cfg.apiToken || ''
+    }
+
     this.rpcProc = spawn(process.execPath, [binPath, '--mode', 'rpc'], {
       cwd: options.cwd,
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        KIMIFLARE_MODEL: options.config.model || '',
-        KIMIFLARE_PROVIDER: options.config.provider || '',
-        KIMIFLARE_API_KEY: options.config.apiKey || '',
-        KIMIFLARE_CLOUD_MODE: String(options.config.cloudMode ?? false),
-      },
+      env: rpcEnv,
     })
 
     this.rpcProc.stdout!.on('data', (chunk: Buffer) => {

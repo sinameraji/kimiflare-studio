@@ -56,14 +56,16 @@ class PiHarness implements IHarness {
     const authStorage = piSdk.AuthStorage.create()
     const modelRegistry = piSdk.ModelRegistry.create(authStorage)
 
+    // Pi resolves provider/model/apiKey from AuthStorage when not explicitly provided.
+    // This lets users who already have Pi configured reuse their existing credentials.
     const { session } = await piSdk.createAgentSession({
       sessionManager: piSdk.SessionManager.inMemory(),
       authStorage,
       modelRegistry,
       cwd: options.cwd,
-      provider: options.config.provider,
-      model: options.config.model,
-      apiKey: options.config.apiKey,
+      provider: options.config.provider || undefined,
+      model: options.config.model || undefined,
+      apiKey: options.config.apiKey || undefined,
     })
 
     this.session = session as typeof this.session
