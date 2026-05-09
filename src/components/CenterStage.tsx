@@ -13,6 +13,9 @@ import {
   Lock,
   Radio,
   AlertOctagon,
+  FilePlus,
+  FileEdit,
+  Trash2,
 } from 'lucide-react'
 import ArchitectureDiagram from './ArchitectureDiagram.tsx'
 import MissionReport from './MissionReport.tsx'
@@ -176,7 +179,7 @@ export default function CenterStage({ missionId, fileChanges = [] }: CenterStage
   const processedFilesRef = useRef(0)
   useEffect(() => {
     const newChanges = fileChanges.slice(processedFilesRef.current)
-    newChanges.forEach((change) => mission.recordFileChange(change.path))
+    newChanges.forEach((change) => mission.recordFileChange(change.path, change.type))
     processedFilesRef.current = fileChanges.length
   }, [fileChanges, mission.recordFileChange])
 
@@ -185,6 +188,7 @@ export default function CenterStage({ missionId, fileChanges = [] }: CenterStage
   const activity = mission.mission?.activity || []
   const usage = mission.mission?.usage
   const anomalies = mission.anomalies
+  const missionFileChanges = mission.mission?.fileChanges || []
 
   return (
     <main className="flex-1 flex flex-col h-full overflow-hidden">
@@ -407,6 +411,31 @@ export default function CenterStage({ missionId, fileChanges = [] }: CenterStage
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Live File Changes */}
+              {missionFileChanges.length > 0 && (
+                <div className="bg-studio-surface rounded-xl p-4 border border-studio-elevated mb-4 max-h-48 overflow-y-auto">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileEdit className="w-3.5 h-3.5 text-studio-primary" />
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary">
+                      Live File Changes
+                    </span>
+                    <span className="text-[10px] text-studio-text-tertiary ml-auto">
+                      {missionFileChanges.length} files
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {missionFileChanges.slice(-15).map((change, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs">
+                        {change.type === 'add' && <FilePlus className="w-3 h-3 text-studio-success shrink-0" />}
+                        {change.type === 'change' && <FileEdit className="w-3 h-3 text-studio-warning shrink-0" />}
+                        {change.type === 'delete' && <Trash2 className="w-3 h-3 text-studio-critical shrink-0" />}
+                        <code className="font-mono text-studio-text-secondary truncate">{change.path}</code>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

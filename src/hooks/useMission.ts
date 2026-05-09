@@ -6,10 +6,16 @@ import type {
   RiskItem,
   ArchitectureDelta,
 } from '../../electron/store/missionStore.js'
-import type { HarnessEvent } from '../types/harness.ts'
+import type { HarnessEvent, FileChangeEvent } from '../types/harness.ts'
 import { createAnomalyDetector, type Anomaly } from '../utils/anomalyDetection.ts'
 
 export type MissionPhase = 'intent' | 'plan' | 'execute' | 'verify' | 'complete' | 'rolled_back'
+
+export interface FileChangeItem {
+  path: string
+  type: 'add' | 'change' | 'delete'
+  timestamp: number
+}
 
 export interface Mission {
   id: string
@@ -21,6 +27,7 @@ export interface Mission {
   intent: string
   plan?: PlanData
   activity: ActivityItem[]
+  fileChanges: FileChangeItem[]
   usage: UsageData
   createdAt: number
   updatedAt: number
@@ -125,6 +132,7 @@ export function useMission(missionId: string | null) {
       status: 'pending_approval',
       intent: '',
       activity: [],
+      fileChanges: [],
       usage: { inputTokens: 0, outputTokens: 0, reasoningTokens: 0, cost: 0 },
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -170,11 +178,19 @@ export function useMission(missionId: string | null) {
     setMission((prev) => (prev ? { ...prev, plan, updatedAt: Date.now() } : prev))
   }, [])
 
-  const recordFileChange = useCallback((path: string) => {
+  const recordFileChange = useCallback((path: string, changeType: FileChangeItem['type'] = 'change') => {
     const anomaly = detectorRef.current.recordFileChange(path)
     if (anomaly) {
       setAnomalies((prev) => [...prev, anomaly])
     }
+    setMission((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        fileChanges: [...prev.fileChanges, { path, type: changeType, timestamp: Date.now() }],
+        updatedAt: Date.now(),
+      }
+    })
   }, [])
 
   const processEvent = useCallback((event: HarnessEvent) => {
