@@ -103,6 +103,7 @@ export function useMission(missionId: string | null) {
 
   const skipNextSyncRef = useRef(false)
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastAnomalyThresholdRef = useRef(0)
 
   // Load mission from store on init; create default if missing
   useEffect(() => {
@@ -147,6 +148,7 @@ export function useMission(missionId: string | null) {
     load()
     setAnomalies([])
     planTextRef.current = ''
+    lastAnomalyThresholdRef.current = 0
 
     return () => {
       cancelled = true
@@ -239,14 +241,16 @@ export function useMission(missionId: string | null) {
     setMission((prev) => {
       if (!prev) return prev
       const uniqueFiles = new Set(prev.fileChanges.map((c) => c.path)).size
-      if (uniqueFiles === 20 || uniqueFiles === 50) {
+      const threshold = uniqueFiles >= 50 ? 50 : uniqueFiles >= 20 ? 20 : 0
+      if (threshold > lastAnomalyThresholdRef.current) {
+        lastAnomalyThresholdRef.current = threshold
         setAnomalies((a) => [
           ...a,
           {
             id: `anomaly-${Date.now()}`,
             category: 'Scope',
-            severity: uniqueFiles >= 50 ? 'critical' : 'warning',
-            message: `This mission has touched ${uniqueFiles} unique files — ${uniqueFiles >= 50 ? 'critically broad' : 'unusually broad'} scope. Review the plan to ensure scope has not crept.`,
+            severity: threshold >= 50 ? 'critical' : 'warning',
+            message: `This mission has touched ${uniqueFiles} unique files — ${threshold >= 50 ? 'critically broad' : 'unusually broad'} scope. Review the plan to ensure scope has not crept.`,
             timestamp: Date.now(),
           },
         ])
