@@ -1,14 +1,25 @@
 import { useRef, useCallback, useEffect } from 'react'
 import { X, Copy, Share2, CheckCircle2 } from 'lucide-react'
-import { sampleMission, samplePlan } from '../data/sample.ts'
 import { copyImageToClipboard } from '../utils/exportImage.ts'
 import ArchitectureDiagram from './ArchitectureDiagram.tsx'
+import type { Mission } from '../hooks/useMission.ts'
+import type { PlanData } from '../../electron/store/missionStore.js'
 
 interface MissionReportProps {
+  mission: Mission
+  plan?: PlanData
+  autonomyLevel: number
+  hoursSaved: number
   onClose: () => void
 }
 
-export default function MissionReport({ onClose }: MissionReportProps) {
+export default function MissionReport({
+  mission,
+  plan,
+  autonomyLevel,
+  hoursSaved,
+  onClose,
+}: MissionReportProps) {
   const cardRef = useRef<HTMLDivElement>(null)
 
   const handleCopyImage = useCallback(async () => {
@@ -22,11 +33,13 @@ export default function MissionReport({ onClose }: MissionReportProps) {
   }, [])
 
   const handleShare = useCallback(async () => {
-    const text = `Just delegated a full ${sampleMission.title} to my AI team. ${sampleMission.risksMitigated} risks mitigated, $${sampleMission.estimatedCost} spent, ~${sampleMission.hoursSaved} hours saved. ${sampleMission.autonomyLevel}% autonomy. This is what CTO work looks like now.`
+    const risksMitigated = plan?.risks.length || 0
+    const estimatedCost = mission.usage.cost.toFixed(2)
+    const text = `Just delegated a full ${mission.title} to my AI team. ${risksMitigated} risks mitigated, $${estimatedCost} spent, ~${hoursSaved} hours saved. ${autonomyLevel}% autonomy. This is what CTO work looks like now.`
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: sampleMission.title, text })
+        await navigator.share({ title: mission.title, text })
         return
       } catch {
         // fall through to fallback
@@ -43,7 +56,7 @@ export default function MissionReport({ onClose }: MissionReportProps) {
     } catch {
       alert('Failed to share')
     }
-  }, [])
+  }, [mission, plan, autonomyLevel, hoursSaved])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -54,7 +67,7 @@ export default function MissionReport({ onClose }: MissionReportProps) {
   }, [onClose])
 
   const riskCounts = { low: 0, medium: 0, high: 0 }
-  samplePlan.risks.forEach((r) => {
+  plan?.risks.forEach((r) => {
     riskCounts[r.level]++
   })
 
@@ -99,72 +112,76 @@ export default function MissionReport({ onClose }: MissionReportProps) {
 
           {/* Mission Title */}
           <h1 className="text-2xl font-semibold text-studio-text text-center tracking-tight mb-10">
-            {sampleMission.title}
+            {mission.title}
           </h1>
 
           {/* Architecture Diagram */}
-          <div className="mb-10">
-            <ArchitectureDiagram
-              before={samplePlan.architectureDelta.before}
-              after={samplePlan.architectureDelta.after}
-            />
-          </div>
+          {plan?.architectureDelta && (
+            <div className="mb-10">
+              <ArchitectureDiagram
+                before={plan.architectureDelta.before}
+                after={plan.architectureDelta.after}
+              />
+            </div>
+          )}
 
           {/* Risk Summary */}
-          <div className="mb-10">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-studio-text">
-                {samplePlan.risks.length} Risks Identified
-              </span>
-              <span className="text-sm font-medium text-studio-success flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4" />
-                {samplePlan.risks.length} Risks Mitigated
-              </span>
-            </div>
-            <div className="space-y-2">
-              {samplePlan.risks.map((risk, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="text-xs text-studio-text-secondary w-24">{risk.category}</span>
-                  <div className="flex-1 h-2 rounded-full bg-studio-elevated overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${
+          {plan && plan.risks.length > 0 && (
+            <div className="mb-10">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm font-medium text-studio-text">
+                  {plan.risks.length} Risks Identified
+                </span>
+                <span className="text-sm font-medium text-studio-success flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {plan.risks.length} Risks Mitigated
+                </span>
+              </div>
+              <div className="space-y-2">
+                {plan.risks.map((risk, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-xs text-studio-text-secondary w-24">{risk.category}</span>
+                    <div className="flex-1 h-2 rounded-full bg-studio-elevated overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${
+                          risk.level === 'low'
+                            ? 'bg-studio-success'
+                            : risk.level === 'medium'
+                              ? 'bg-studio-warning'
+                              : 'bg-studio-critical'
+                        }`}
+                        style={{ width: risk.level === 'high' ? '100%' : risk.level === 'medium' ? '60%' : '30%' }}
+                      />
+                    </div>
+                    <span
+                      className={`text-[10px] uppercase font-bold w-16 text-right ${
                         risk.level === 'low'
-                          ? 'bg-studio-success'
+                          ? 'text-studio-success'
                           : risk.level === 'medium'
-                            ? 'bg-studio-warning'
-                            : 'bg-studio-critical'
+                            ? 'text-studio-warning'
+                            : 'text-studio-critical'
                       }`}
-                      style={{ width: risk.level === 'high' ? '100%' : risk.level === 'medium' ? '60%' : '30%' }}
-                    />
+                    >
+                      {risk.level}
+                    </span>
                   </div>
-                  <span
-                    className={`text-[10px] uppercase font-bold w-16 text-right ${
-                      risk.level === 'low'
-                        ? 'text-studio-success'
-                        : risk.level === 'medium'
-                          ? 'text-studio-warning'
-                          : 'text-studio-critical'
-                    }`}
-                  >
-                    {risk.level}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Cost & Time */}
           <div className="flex items-center justify-center gap-8 mb-10">
             <div className="text-center">
               <div className="text-2xl font-semibold text-studio-cost">
-                ${sampleMission.estimatedCost}
+                ${mission.usage.cost.toFixed(2)}
               </div>
               <div className="text-[11px] text-studio-text-secondary mt-1">spent</div>
             </div>
             <div className="w-px h-10 bg-studio-elevated" />
             <div className="text-center">
               <div className="text-2xl font-semibold text-studio-text">
-                ~{sampleMission.hoursSaved} hours
+                ~{hoursSaved} hours
               </div>
               <div className="text-[11px] text-studio-text-secondary mt-1">saved</div>
             </div>
@@ -176,7 +193,7 @@ export default function MissionReport({ onClose }: MissionReportProps) {
               Autonomy Granted
             </span>
             <span className="text-3xl font-semibold text-studio-primary">
-              {sampleMission.autonomyLevel}%
+              {autonomyLevel}%
             </span>
           </div>
 
