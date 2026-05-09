@@ -293,6 +293,15 @@ export function useMission(missionId: string | null) {
         })
         break
       }
+      case 'permission.request': {
+        appendActivity({
+          id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          type: 'steer',
+          timestamp: Date.now(),
+          payload: { action: `Permission requested: ${event.toolName}`, toolName: event.toolName, args: event.args },
+        })
+        break
+      }
       case 'tool.start': {
         appendActivity({
           id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
