@@ -52,7 +52,7 @@ class KimiFlareHarness implements IHarness {
 
     const { session } = await kimiflareSdk.createAgentSession({
       cwd: options.cwd,
-      config: options.config,
+      config: options.config as unknown as Record<string, unknown>,
     })
 
     this.session = session as typeof this.session

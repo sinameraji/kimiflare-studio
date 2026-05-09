@@ -6,7 +6,7 @@ export interface HarnessConfig {
   model?: string
   apiKey?: string
   baseUrl?: string
-  [key: string]: unknown
+  cwd?: string
 }
 
 export interface HarnessStartOptions {
