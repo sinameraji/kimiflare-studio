@@ -5,7 +5,7 @@ import HarnessPicker from './HarnessPicker.tsx'
 import HarnessConfigForm from './HarnessConfigForm.tsx'
 
 interface OnboardingScreenProps {
-  onComplete: (config: HarnessConfig, workspacePath: string) => void
+  onComplete: (config: HarnessConfig, workspacePath: string) => Promise<void>
   onSelectFolder: () => Promise<string | undefined>
 }
 
@@ -16,6 +16,8 @@ export default function OnboardingScreen({ onComplete, onSelectFolder }: Onboard
   const [selectedHarness, setSelectedHarness] = useState<HarnessId | null>(null)
   const [config, setConfig] = useState<HarnessConfig | null>(null)
   const [workspacePath, setWorkspacePath] = useState('')
+  const [error, setError] = useState('')
+  const [isStarting, setIsStarting] = useState(false)
 
   const handleSelectFolder = async () => {
     const path = await onSelectFolder()
@@ -24,9 +26,15 @@ export default function OnboardingScreen({ onComplete, onSelectFolder }: Onboard
     }
   }
 
-  const handleComplete = () => {
-    if (config && workspacePath) {
-      onComplete({ ...config, cwd: workspacePath }, workspacePath)
+  const handleComplete = async () => {
+    if (!config || !workspacePath) return
+    setError('')
+    setIsStarting(true)
+    try {
+      await onComplete({ ...config, cwd: workspacePath }, workspacePath)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to start harness')
+      setIsStarting(false)
     }
   }
 
@@ -148,11 +156,17 @@ export default function OnboardingScreen({ onComplete, onSelectFolder }: Onboard
             <p className="text-sm text-studio-text-secondary mb-8">
               Your harness is configured and your workspace is set. Start your first mission.
             </p>
+            {error && (
+              <div className="mb-4 px-4 py-3 rounded-lg bg-studio-critical-light text-studio-critical text-sm border border-studio-critical/20">
+                {error}
+              </div>
+            )}
             <button
               onClick={handleComplete}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors"
+              disabled={isStarting}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors disabled:opacity-60"
             >
-              Start First Mission
+              {isStarting ? 'Starting...' : 'Start First Mission'}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
