@@ -5,22 +5,69 @@ export interface ActivityItem {
   payload: unknown
 }
 
+export interface Node {
+  id: string
+  label: string
+  type: 'service' | 'database'
+  isNew?: boolean
+}
+
+export interface Edge {
+  from: string
+  to: string
+}
+
+export interface ArchitectureDelta {
+  before: { nodes: Node[]; edges: Edge[] }
+  after: { nodes: Node[]; edges: Edge[] }
+}
+
+export interface RiskItem {
+  category: string
+  level: 'low' | 'medium' | 'high'
+  confidence: 'low' | 'medium' | 'high'
+  description: string
+}
+
+export interface CostProjection {
+  tokens: string
+  apiCost: string
+  infrastructure: string
+  timeEstimate: string
+}
+
+export interface Alternative {
+  name: string
+  pros: string[]
+  cons: string[]
+}
+
 export interface PlanData {
   approach: string
-  architectureDelta: string
-  risks: string[]
-  costProjection: string
-  alternatives: string[]
+  architectureDelta: ArchitectureDelta
+  risks: RiskItem[]
+  costProjection: CostProjection
+  alternatives: Alternative[]
+}
+
+export interface UsageData {
+  inputTokens: number
+  outputTokens: number
+  reasoningTokens: number
+  cost: number
 }
 
 export interface Mission {
   id: string
+  title: string
   workspacePath: string
   harnessId: string
   phase: 'intent' | 'plan' | 'execute' | 'verify' | 'complete' | 'rolled_back'
+  status: 'pending_approval' | 'in_progress' | 'completed' | 'failed' | 'aborted'
   intent: string
   plan?: PlanData
   activity: ActivityItem[]
+  usage: UsageData
   createdAt: number
   updatedAt: number
 }
@@ -28,18 +75,15 @@ export interface Mission {
 export class MissionStore {
   private missions = new Map<string, Mission>()
 
-  create(mission: Omit<Mission, 'id' | 'createdAt' | 'updatedAt' | 'activity'>): Mission {
+  create(mission: Omit<Mission, 'createdAt' | 'updatedAt'>): Mission {
     const now = Date.now()
-    const id = `mission-${now}-${Math.random().toString(36).slice(2, 7)}`
-    const full: Mission = {
-      ...mission,
-      id,
-      activity: [],
-      createdAt: now,
-      updatedAt: now,
-    }
-    this.missions.set(id, full)
+    const full: Mission = { ...mission, createdAt: now, updatedAt: now }
+    this.missions.set(mission.id, full)
     return full
+  }
+
+  get(id: string): Mission | undefined {
+    return this.missions.get(id)
   }
 
   update(id: string, patch: Partial<Mission>): Mission | undefined {
@@ -50,24 +94,12 @@ export class MissionStore {
     return updated
   }
 
-  appendActivity(id: string, item: ActivityItem): Mission | undefined {
-    const existing = this.missions.get(id)
-    if (!existing) return undefined
-    existing.activity.push(item)
-    existing.updatedAt = Date.now()
-    return existing
+  delete(id: string): boolean {
+    return this.missions.delete(id)
   }
 
-  list(workspacePath?: string): Mission[] {
-    const all = Array.from(this.missions.values())
-    if (workspacePath) {
-      return all.filter((m) => m.workspacePath === workspacePath)
-    }
-    return all
-  }
-
-  get(id: string): Mission | undefined {
-    return this.missions.get(id)
+  list(): Mission[] {
+    return Array.from(this.missions.values()).sort((a, b) => b.updatedAt - a.updatedAt)
   }
 }
 
