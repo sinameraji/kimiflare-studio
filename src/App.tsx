@@ -6,7 +6,6 @@ import WelcomeScreen from './components/WelcomeScreen.tsx'
 import OnboardingScreen from './components/OnboardingScreen.tsx'
 import { useHarness } from './hooks/useHarness.ts'
 import { useFS } from './hooks/useFS.ts'
-import { useMission } from './hooks/useMission.ts'
 
 type AppView = 'welcome' | 'onboarding' | 'mission'
 
@@ -16,7 +15,6 @@ export default function App() {
 
   const harness = useHarness()
   const fs = useFS()
-  const mission = useMission(selectedMissionId)
 
   const handleStartOnboarding = useCallback(() => {
     setView('onboarding')
