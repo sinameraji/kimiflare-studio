@@ -159,11 +159,11 @@ export default function CenterStage() {
                 <div className="flex items-center gap-4 text-xs text-studio-text-tertiary">
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3 h-3" />
-                    2-3 hours
+                    {samplePlan.costProjection.timeEstimate}
                   </span>
                   <span className="flex items-center gap-1.5 text-studio-cost">
                     <DollarSign className="w-3 h-3" />
-                    ~$12.45
+                    ~{sampleMission.estimatedCost}
                   </span>
                 </div>
               </div>
@@ -171,75 +171,95 @@ export default function CenterStage() {
                 {sampleMission.title}
               </h2>
 
+              {/* Approach */}
+              <div className="mb-8">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-3">
+                  Approach
+                </span>
+                <div className="bg-studio-surface rounded-xl p-6 border border-studio-elevated">
+                  <p className="text-sm text-studio-text-secondary leading-relaxed">
+                    {samplePlan.approach}
+                  </p>
+                </div>
+              </div>
+
               {/* Risk Assessment */}
-              <div className="py-5">
-                <div className="flex items-center gap-2 mb-3">
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
                   <AlertTriangle className="w-4 h-4 text-studio-warning" />
                   <span className="text-sm font-medium text-studio-text">Risk Assessment</span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-studio-critical-light text-studio-critical font-medium">
                     1 high, 1 medium
                   </span>
                 </div>
-                <div className="space-y-2">
+                <div className="grid grid-cols-3 gap-3">
                   {samplePlan.risks.map((risk, i) => (
-                    <div key={i} className="flex items-start gap-3 py-2">
-                      <div
-                        className={`mt-0.5 ${
-                          risk.level === 'low'
-                            ? 'text-studio-success'
-                            : risk.level === 'medium'
-                              ? 'text-studio-warning'
-                              : 'text-studio-critical'
-                        }`}
-                      >
-                        {riskIcons[risk.category]}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-studio-text">{risk.category}</span>
-                          <span
-                            className={`text-[10px] uppercase font-bold ${
-                              risk.level === 'low'
-                                ? 'text-studio-success'
-                                : risk.level === 'medium'
-                                  ? 'text-studio-warning'
-                                  : 'text-studio-critical'
-                            }`}
-                          >
-                            {risk.level}
-                          </span>
+                    <div
+                      key={i}
+                      className={`bg-studio-surface rounded-xl p-5 border ${
+                        risk.level === 'low'
+                          ? 'border-studio-success/30'
+                          : risk.level === 'medium'
+                            ? 'border-studio-warning/30'
+                            : 'border-studio-critical/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <div
+                          className={`${
+                            risk.level === 'low'
+                              ? 'text-studio-success'
+                              : risk.level === 'medium'
+                                ? 'text-studio-warning'
+                                : 'text-studio-critical'
+                          }`}
+                        >
+                          {riskIcons[risk.category]}
                         </div>
-                        <p className="text-xs text-studio-text-secondary mt-0.5 leading-relaxed">
-                          {risk.description}
-                        </p>
+                        <span className="text-xs font-medium text-studio-text">{risk.category}</span>
+                        <span
+                          className={`text-[10px] uppercase font-bold ml-auto ${
+                            risk.level === 'low'
+                              ? 'text-studio-success'
+                              : risk.level === 'medium'
+                                ? 'text-studio-warning'
+                                : 'text-studio-critical'
+                          }`}
+                        >
+                          {risk.level}
+                        </span>
                       </div>
+                      <p className="text-xs text-studio-text-secondary leading-relaxed">
+                        {risk.description}
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Cost Projection */}
-              <div className="py-4 border-t border-studio-elevated">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
                   <DollarSign className="w-4 h-4 text-studio-cost" />
                   <span className="text-sm font-medium text-studio-text">Cost Projection</span>
                 </div>
-                <div className="flex items-center gap-6 text-xs">
-                  <span className="text-studio-text-secondary">
-                    <span className="text-studio-text font-medium">{samplePlan.costProjection.tokens}</span>{' '}
-                    tokens
-                  </span>
-                  <span className="text-studio-text-secondary">
-                    <span className="text-studio-cost font-medium">{samplePlan.costProjection.apiCost}</span>{' '}
-                    API
-                  </span>
-                  <span className="text-studio-text-secondary">
-                    <span className="text-studio-text font-medium">{samplePlan.costProjection.infrastructure}</span>{' '}
-                    infra
-                  </span>
-                  <span className="text-studio-text-secondary">
-                    <span className="text-studio-text font-medium">{samplePlan.costProjection.timeEstimate}</span>
-                  </span>
+                <div className="bg-studio-surface rounded-xl p-6 grid grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-xl font-semibold text-studio-text">{samplePlan.costProjection.tokens}</div>
+                    <div className="text-[11px] text-studio-text-secondary mt-1">Tokens</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-semibold text-studio-cost">{samplePlan.costProjection.apiCost}</div>
+                    <div className="text-[11px] text-studio-text-secondary mt-1">API Cost</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-semibold text-studio-text">{samplePlan.costProjection.infrastructure}</div>
+                    <div className="text-[11px] text-studio-text-secondary mt-1">Infrastructure</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-semibold text-studio-text">{samplePlan.costProjection.timeEstimate}</div>
+                    <div className="text-[11px] text-studio-text-secondary mt-1">Time Estimate</div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -6,6 +6,9 @@ export const sampleMission = {
   createdAt: '2026-05-08T09:30:00Z',
   estimatedCost: 12.45,
   actualCost: 0,
+  autonomyLevel: 87,
+  hoursSaved: 6,
+  risksMitigated: 3,
 }
 
 export const samplePlan = {
@@ -15,14 +18,14 @@ export const samplePlan = {
     after: ['Load Balancer → App Server (stateless) → Redis (token blacklist) → PostgreSQL (users only)'],
   },
   risks: [
-    { category: 'Security', level: 'medium' as const, description: 'JWT secret rotation strategy not yet defined. If leaked, all tokens compromised.' },
-    { category: 'Performance', level: 'low' as const, description: 'Redis adds ~2ms latency per request but removes DB session queries.' },
-    { category: 'Operational', level: 'high' as const, description: 'Requires new Redis cluster in production. Rollback requires session table to remain populated for 24h.' },
+    { category: 'Security', level: 'medium' as const, confidence: 'medium' as const, description: 'JWT secret rotation strategy not yet defined. If leaked, all tokens compromised.' },
+    { category: 'Performance', level: 'low' as const, confidence: 'high' as const, description: 'Redis adds ~2ms latency per request but removes DB session queries.' },
+    { category: 'Operational', level: 'high' as const, confidence: 'high' as const, description: 'Requires new Redis cluster in production. Rollback requires session table to remain populated for 24h.' },
   ],
   costProjection: {
     tokens: '~850K',
     apiCost: '$12.45',
-    infrastructure: '+$45/mo (Redis Cloud)',
+    infrastructure: '+$45/mo',
     timeEstimate: '2-3 hours',
   },
   alternatives: [
@@ -32,41 +35,11 @@ export const samplePlan = {
   ],
 }
 
-export const sampleAgents = [
-  { id: 'architect', name: 'Architect', status: 'idle' as const, icon: 'Layout', description: 'Designs structure, reviews plans' },
-  { id: 'implementer', name: 'Implementer', status: 'working' as const, icon: 'Code', description: 'Writes code and tests' },
-  { id: 'security', name: 'Security', status: 'reviewing' as const, icon: 'Shield', description: 'Reviews for vulnerabilities' },
-  { id: 'performance', name: 'Performance', status: 'idle' as const, icon: 'Zap', description: 'Checks efficiency and latency' },
-  { id: 'testing', name: 'Testing', status: 'idle' as const, icon: 'CheckCircle', description: 'Validates behavior' },
+export const sampleMissions = [
+  { id: 'mission-001', title: 'Refactor Auth to JWT + Redis', status: 'pending_approval' as const, phase: 'plan' as const },
+  { id: 'mission-002', title: 'Add rate limiting to API gateway', status: 'in_progress' as const, phase: 'execute' as const },
+  { id: 'mission-003', title: 'Migrate from REST to GraphQL', status: 'completed' as const, phase: 'verify' as const },
 ]
-
-export const sampleDecisions = [
-  {
-    id: 'd1',
-    decision: 'Chose Redis over in-memory store for token blacklist',
-    rationale: 'In-memory store would not survive process restarts and prevents horizontal scaling.',
-    tradeOffs: 'Adds infrastructure dependency and ~2ms latency.',
-    reversibility: 'Easy' as const,
-    timestamp: '2026-05-08T09:35:00Z',
-    agent: 'Architect',
-  },
-  {
-    id: 'd2',
-    decision: 'Selected RS256 over HS256 for JWT signing',
-    rationale: 'RS256 allows key rotation without re-deploying all services. HS256 requires shared secret.',
-    tradeOffs: 'Slightly larger token size (~200 bytes).',
-    reversibility: 'Medium' as const,
-    timestamp: '2026-05-08T09:36:00Z',
-    agent: 'Security',
-  },
-]
-
-export const sampleRiskRadar = {
-  security: { score: 65, label: 'Medium', items: 2 },
-  performance: { score: 85, label: 'Low', items: 1 },
-  operational: { score: 35, label: 'High', items: 3 },
-  compliance: { score: 90, label: 'Low', items: 0 },
-}
 
 export const sampleActivity = [
   { id: 1, agent: 'Architect', action: 'Analyzed current auth flow', time: '2 min ago', type: 'analysis' as const },
