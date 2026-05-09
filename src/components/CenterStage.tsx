@@ -273,7 +273,8 @@ export default function CenterStage() {
                     Goal
                   </label>
                   <textarea
-                    className="w-full h-24 bg-studio-surface rounded-lg p-3 text-sm text-studio-text placeholder-studio-text-tertiary focus:outline-none focus:ring-1 focus:ring-studio-primary/50 resize-none border border-studio-elevated"
+                    rows={3}
+                    className="w-full bg-studio-surface rounded-lg p-3 text-sm text-studio-text placeholder-studio-text-tertiary focus:outline-none focus:ring-1 focus:ring-studio-primary/50 resize-none border border-studio-elevated"
                     placeholder="What do you want to build or change?"
                     defaultValue="Refactor the authentication middleware from session-based to JWT with Redis-backed revocation"
                   />
@@ -283,32 +284,11 @@ export default function CenterStage() {
                     Constraints
                   </label>
                   <textarea
-                    className="w-full h-20 bg-studio-surface rounded-lg p-3 text-sm text-studio-text placeholder-studio-text-tertiary focus:outline-none focus:ring-1 focus:ring-studio-primary/50 resize-none border border-studio-elevated"
+                    rows={2}
+                    className="w-full bg-studio-surface rounded-lg p-3 text-sm text-studio-text placeholder-studio-text-tertiary focus:outline-none focus:ring-1 focus:ring-studio-primary/50 resize-none border border-studio-elevated"
                     placeholder="Non-negotiables..."
                     defaultValue="Must maintain backward compatibility during migration. No downtime allowed. Budget under $100/mo additional infra."
                   />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-2">
-                      Confidence
-                    </label>
-                    <select className="w-full bg-studio-surface rounded-lg p-2.5 text-sm text-studio-text focus:outline-none focus:ring-1 focus:ring-studio-primary/50 border border-studio-elevated">
-                      <option>Explore — Research and report</option>
-                      <option selected>Execute — Build and ship</option>
-                      <option>Emergency Fix — Minimal review</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-studio-text-tertiary block mb-2">
-                      Scope
-                    </label>
-                    <select className="w-full bg-studio-surface rounded-lg p-2.5 text-sm text-studio-text focus:outline-none focus:ring-1 focus:ring-studio-primary/50 border border-studio-elevated">
-                      <option>Auth module only</option>
-                      <option selected>Auth + User API</option>
-                      <option>Full codebase</option>
-                    </select>
-                  </div>
                 </div>
                 <button className="w-full py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors">
                   Generate Plan
@@ -318,61 +298,49 @@ export default function CenterStage() {
           )}
 
           {activePhase === 'execute' && (
-            <div className="mt-6 space-y-3">
-              <div className="flex items-center gap-2 mb-4">
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-5">
                 <div className="w-2 h-2 rounded-full bg-studio-primary animate-pulse" />
                 <span className="text-sm font-medium text-studio-text">Executing</span>
               </div>
-              {sampleActivity.map((item) => (
-                <div key={item.id} className="flex items-start gap-3 py-2">
-                  <div
-                    className={`w-1.5 h-1.5 rounded-full mt-1.5 ${
-                      item.type === 'warning'
-                        ? 'bg-studio-warning'
-                        : item.type === 'info'
-                          ? 'bg-studio-info'
-                          : 'bg-studio-primary'
-                    }`}
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-studio-text">{item.agent}</span>
-                      <span className="text-[10px] text-studio-text-tertiary">{item.time}</span>
+              <div className="bg-studio-surface rounded-xl p-6 space-y-4">
+                {sampleActivity.map((item) => (
+                  <div key={item.id} className="flex items-start gap-3">
+                    <div
+                      className={`w-1.5 h-1.5 rounded-full mt-1.5 ${
+                        item.type === 'warning'
+                          ? 'bg-studio-warning'
+                          : item.type === 'info'
+                            ? 'bg-studio-info'
+                            : 'bg-studio-primary'
+                      }`}
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm text-studio-text">{item.action}</p>
+                      <span className="text-[11px] text-studio-text-tertiary">{item.time}</span>
                     </div>
-                    <p className="text-xs text-studio-text-secondary mt-0.5">{item.action}</p>
                   </div>
+                ))}
+                <div className="flex items-center gap-2 pt-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-studio-primary animate-pulse" />
+                  <span className="text-sm text-studio-text-tertiary animate-pulse">Working...</span>
                 </div>
-              ))}
-              <div className="flex items-center gap-2 py-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-studio-primary animate-pulse" />
-                <span className="text-xs text-studio-text-tertiary animate-pulse">Waiting for next action...</span>
               </div>
             </div>
           )}
 
           {activePhase === 'verify' && (
             <div className="mt-8 text-center">
-              <div className="w-12 h-12 rounded-full bg-studio-success-light flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-6 h-6 text-studio-success" />
+              <div className="w-16 h-16 rounded-full bg-studio-success-light flex items-center justify-center mx-auto mb-5">
+                <CheckCircle2 className="w-8 h-8 text-studio-success" />
               </div>
-              <h3 className="text-lg font-semibold text-studio-text mb-1">Mission Complete</h3>
-              <p className="text-sm text-studio-text-secondary mb-6">
-                All verification checks passed. 12 test scenarios executed.
+              <h3 className="text-xl font-semibold text-studio-text mb-2">Mission Complete</h3>
+              <p className="text-sm text-studio-text-secondary mb-8">
+                All verification checks passed.
               </p>
-              <div className="flex items-center justify-center gap-6 text-sm">
-                <div>
-                  <span className="text-studio-success font-semibold">12/12</span>
-                  <span className="text-studio-text-secondary ml-1">tests</span>
-                </div>
-                <div>
-                  <span className="text-studio-text font-semibold">0</span>
-                  <span className="text-studio-text-secondary ml-1">breaking</span>
-                </div>
-                <div>
-                  <span className="text-studio-cost font-semibold">$11.20</span>
-                  <span className="text-studio-text-secondary ml-1">spent</span>
-                </div>
-              </div>
+              <button className="px-6 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors">
+                View Mission Report
+              </button>
             </div>
           )}
         </div>
