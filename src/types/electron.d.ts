@@ -7,6 +7,7 @@ import type {
   PromptOptions,
   PermissionDecision,
 } from './harness.ts'
+import type { Mission } from '../../electron/store/missionStore.js'
 
 export interface ElectronAPI {
   harness: {
@@ -33,6 +34,13 @@ export interface ElectronAPI {
     get: <T>(key: string) => Promise<T | undefined>
     set: <T>(key: string, value: T) => Promise<void>
     getAll: () => Promise<Record<string, unknown>>
+  }
+  mission: {
+    create: (mission: Omit<Mission, 'createdAt' | 'updatedAt'>) => Promise<Mission>
+    get: (id: string) => Promise<Mission | undefined>
+    update: (id: string, patch: Partial<Mission>) => Promise<Mission | undefined>
+    delete: (id: string) => Promise<boolean>
+    list: () => Promise<Mission[]>
   }
 }
 

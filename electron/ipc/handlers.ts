@@ -2,6 +2,7 @@ import { ipcMain, dialog, BrowserWindow } from 'electron'
 import fs from 'node:fs'
 import { HarnessManager } from '../harness/HarnessManager.js'
 import { configStore } from '../store/configStore.js'
+import { missionStore } from '../store/missionStore.js'
 import { watchWorkspace, unwatchWorkspace } from '../fs/watcher.js'
 
 export function registerIpcHandlers(): void {
@@ -96,4 +97,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('config:get', async (_, key) => configStore.get(key))
   ipcMain.handle('config:set', async (_, key, value) => configStore.set(key, value))
   ipcMain.handle('config:getAll', async () => configStore.getAll())
+
+  // Mission
+  ipcMain.handle('mission:create', async (_, mission) => missionStore.create(mission))
+  ipcMain.handle('mission:get', async (_, id) => missionStore.get(id))
+  ipcMain.handle('mission:update', async (_, id, patch) => missionStore.update(id, patch))
+  ipcMain.handle('mission:delete', async (_, id) => missionStore.delete(id))
+  ipcMain.handle('mission:list', async () => missionStore.list())
 }

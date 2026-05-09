@@ -6,6 +6,7 @@ import type {
   PromptOptions,
   PermissionDecision,
 } from '../src/types/harness.ts'
+import type { Mission } from '../electron/store/missionStore.js'
 
 contextBridge.exposeInMainWorld('electronAPI', {
   harness: {
@@ -44,5 +45,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     get: <T>(key: string) => ipcRenderer.invoke('config:get', key) as Promise<T | undefined>,
     set: <T>(key: string, value: T) => ipcRenderer.invoke('config:set', key, value),
     getAll: () => ipcRenderer.invoke('config:getAll'),
+  },
+
+  mission: {
+    create: (mission: Omit<Mission, 'createdAt' | 'updatedAt'>) =>
+      ipcRenderer.invoke('mission:create', mission) as Promise<Mission>,
+    get: (id: string) => ipcRenderer.invoke('mission:get', id) as Promise<Mission | undefined>,
+    update: (id: string, patch: Partial<Mission>) =>
+      ipcRenderer.invoke('mission:update', id, patch) as Promise<Mission | undefined>,
+    delete: (id: string) => ipcRenderer.invoke('mission:delete', id) as Promise<boolean>,
+    list: () => ipcRenderer.invoke('mission:list') as Promise<Mission[]>,
   },
 })

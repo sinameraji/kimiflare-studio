@@ -8,6 +8,7 @@ import PermissionModal from './components/PermissionModal.tsx'
 import { useHarness } from './hooks/useHarness.ts'
 import { useFS } from './hooks/useFS.ts'
 import { useConfig } from './hooks/useConfig.ts'
+import { useMissions } from './hooks/useMissions.ts'
 
 type AppView = 'welcome' | 'onboarding' | 'mission'
 
@@ -22,6 +23,7 @@ export default function App() {
   const harness = useHarness()
   const fs = useFS()
   const config = useConfig()
+  const missions = useMissions()
 
   // Try to restore previous session on mount
   useEffect(() => {
@@ -32,7 +34,13 @@ export default function App() {
         const cwd = lastConfig.cwd || (await config.get<string>(LAST_WORKSPACE_KEY)) || process.cwd()
         await harness.start({ ...lastConfig, cwd })
         setView('mission')
-        setSelectedMissionId('mission-001')
+        // Select the most recent mission if any exist
+        const list = await window.electronAPI.mission.list()
+        if (list.length > 0) {
+          setSelectedMissionId(list[0].id)
+        } else {
+          setSelectedMissionId('mission-001')
+        }
       }
       setIsRestoring(false)
     }
@@ -49,15 +57,46 @@ export default function App() {
       await config.set(LAST_CONFIG_KEY, { ...cfg, cwd: workspacePath })
       await config.set(LAST_WORKSPACE_KEY, workspacePath)
       await harness.start({ ...cfg, cwd: workspacePath })
+
+      // Create a new mission in the store
+      const mission = await missions.createMission({
+        id: `mission-${Date.now()}`,
+        title: 'New Mission',
+        workspacePath,
+        harnessId: cfg.harnessId,
+        phase: 'intent',
+        status: 'pending_approval',
+        intent: '',
+        activity: [],
+        usage: { inputTokens: 0, outputTokens: 0, reasoningTokens: 0, cost: 0 },
+        fileChanges: [],
+      })
+
       setView('mission')
-      setSelectedMissionId('mission-001')
+      setSelectedMissionId(mission.id)
     },
-    [harness, config],
+    [harness, config, missions],
   )
 
   const handleSelectFolder = useCallback(async () => {
     return fs.selectFolder()
   }, [fs])
+
+  const handleNewMission = useCallback(async () => {
+    const mission = await missions.createMission({
+      id: `mission-${Date.now()}`,
+      title: 'New Mission',
+      workspacePath: '',
+      harnessId: 'kimiflare',
+      phase: 'intent',
+      status: 'pending_approval',
+      intent: '',
+      activity: [],
+      usage: { inputTokens: 0, outputTokens: 0, reasoningTokens: 0, cost: 0 },
+      fileChanges: [],
+    })
+    setSelectedMissionId(mission.id)
+  }, [missions])
 
   if (isRestoring) {
     return (
@@ -66,6 +105,15 @@ export default function App() {
       </div>
     )
   }
+
+  const leftRailMissions = missions.missions.map((m) => ({
+    id: m.id,
+    title: m.title,
+    phase: m.phase,
+    status: m.status,
+    harnessId: m.harnessId,
+    updatedAt: m.updatedAt,
+  }))
 
   return (
     <div className="h-screen w-screen flex bg-studio-bg">
@@ -83,19 +131,10 @@ export default function App() {
       {view === 'mission' && (
         <>
           <LeftRail
-            missions={[
-              {
-                id: 'mission-001',
-                title: 'Current Mission',
-                phase: 'plan',
-                status: 'in_progress',
-                harnessId: harness.state?.currentModel ? 'kimiflare' : 'none',
-                updatedAt: Date.now(),
-              },
-            ]}
+            missions={leftRailMissions}
             selectedMissionId={selectedMissionId}
             onSelectMission={(id) => setSelectedMissionId(id)}
-            onNewMission={() => setSelectedMissionId(null)}
+            onNewMission={handleNewMission}
             isHarnessConnected={harness.isConnected}
           />
           {selectedMissionId ? (
