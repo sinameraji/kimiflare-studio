@@ -1,6 +1,8 @@
 import { app, BrowserWindow } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { registerIpcHandlers } from './ipc/handlers.js'
+import { configStore } from './store/configStore.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const isDev = !app.isPackaged
@@ -30,6 +32,8 @@ const createWindow = () => {
 }
 
 app.whenReady().then(() => {
+  configStore.init()
+  registerIpcHandlers()
   createWindow()
 
   app.on('activate', () => {
