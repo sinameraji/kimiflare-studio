@@ -400,9 +400,33 @@ export default function CenterStage({ missionId }: CenterStageProps) {
                   <span className="text-sm text-studio-text-tertiary animate-pulse">Working...</span>
                 </div>
               </div>
+              {/* Steer Input */}
+              <div className="mt-4 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Steer the agent mid-flight..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const value = (e.target as HTMLInputElement).value
+                      if (value.trim()) {
+                        harness.steer(value.trim()).catch(console.error)
+                        ;(e.target as HTMLInputElement).value = ''
+                      }
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 rounded-lg bg-studio-surface border border-studio-elevated text-sm text-studio-text placeholder:text-studio-text-tertiary focus:outline-none focus:border-studio-primary"
+                />
+                <button
+                  onClick={() => harness.abort().catch(console.error)}
+                  className="px-4 py-2 rounded-lg bg-studio-critical text-white text-sm font-medium hover:bg-studio-critical/90 transition-colors"
+                >
+                  Abort
+                </button>
+              </div>
+
               <button
                 onClick={() => setActivePhase('verify')}
-                className="w-full mt-6 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors"
+                className="w-full mt-4 py-2.5 rounded-lg bg-studio-primary text-white text-sm font-medium hover:bg-studio-primary-light transition-colors"
               >
                 Mark Complete & Verify
               </button>
