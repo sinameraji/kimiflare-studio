@@ -4,7 +4,7 @@ import { HarnessManager } from '../harness/HarnessManager.js'
 import { configStore } from '../store/configStore.js'
 import { missionStore } from '../store/missionStore.js'
 import { watchWorkspace, unwatchWorkspace } from '../fs/watcher.js'
-import { detectOpenCodeConfig, detectPiConfig } from '../harness/detectConfig.js'
+import { detectOpenCodeConfig, detectPiConfig, detectKimiFlareConfig } from '../harness/detectConfig.js'
 
 export function registerIpcHandlers(): void {
   const manager = HarnessManager.getInstance()
@@ -108,12 +108,9 @@ export function registerIpcHandlers(): void {
 
   // Harness config auto-detection
   ipcMain.handle('harness:detectConfig', async (_, harnessId: string) => {
-    if (harnessId === 'opencode') {
-      return detectOpenCodeConfig()
-    }
-    if (harnessId === 'pi') {
-      return detectPiConfig()
-    }
+    if (harnessId === 'opencode') return detectOpenCodeConfig()
+    if (harnessId === 'pi') return detectPiConfig()
+    if (harnessId === 'kimiflare') return detectKimiFlareConfig()
     return null
   })
 }

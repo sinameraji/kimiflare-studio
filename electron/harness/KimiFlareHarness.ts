@@ -12,6 +12,7 @@ import type {
   PromptOptions,
   PermissionDecision,
 } from '../../src/types/harness.ts'
+import { detectKimiFlareConfig } from './detectConfig.js'
 
 let kimiflareSdk: typeof import('kimiflare/sdk') | undefined
 
@@ -70,16 +71,19 @@ class KimiFlareHarness implements IHarness {
     this.mode = 'sdk'
 
     const cfg = options.config
+    const detected = detectKimiFlareConfig()
+    const mode = cfg.mode || detected?.mode || 'direct'
+
     const sdkConfig: Record<string, unknown> =
-      cfg.mode === 'cloud'
+      mode === 'cloud'
         ? {
-            githubToken: cfg.githubToken,
-            remoteWorkerUrl: cfg.remoteWorkerUrl,
+            githubToken: cfg.githubToken || detected?.githubToken,
+            remoteWorkerUrl: cfg.remoteWorkerUrl || detected?.remoteWorkerUrl,
           }
         : {
-            accountId: cfg.accountId,
-            apiToken: cfg.apiToken,
-            model: cfg.model || '@cf/moonshotai/kimi-k2.6',
+            accountId: cfg.accountId || detected?.accountId,
+            apiToken: cfg.apiToken || detected?.apiToken,
+            model: cfg.model || detected?.model || '@cf/moonshotai/kimi-k2.6',
           }
 
     const { session } = await kimiflareSdk.createAgentSession({
@@ -118,19 +122,22 @@ class KimiFlareHarness implements IHarness {
     }
 
     const cfg = options.config
+    const detected = detectKimiFlareConfig()
+    const mode = cfg.mode || detected?.mode || 'direct'
+
     const rpcEnv: Record<string, string> = {
       ...process.env,
-      KIMIFLARE_MODEL: cfg.model || '@cf/moonshotai/kimi-k2.6',
+      KIMIFLARE_MODEL: cfg.model || detected?.model || '@cf/moonshotai/kimi-k2.6',
     }
 
-    if (cfg.mode === 'cloud') {
+    if (mode === 'cloud') {
       rpcEnv.KIMIFLARE_MODE = 'cloud'
-      rpcEnv.KIMIFLARE_GITHUB_TOKEN = cfg.githubToken || ''
-      rpcEnv.KIMIFLARE_REMOTE_WORKER_URL = cfg.remoteWorkerUrl || ''
+      rpcEnv.KIMIFLARE_GITHUB_TOKEN = cfg.githubToken || detected?.githubToken || ''
+      rpcEnv.KIMIFLARE_REMOTE_WORKER_URL = cfg.remoteWorkerUrl || detected?.remoteWorkerUrl || ''
     } else {
       rpcEnv.KIMIFLARE_MODE = 'direct'
-      rpcEnv.KIMIFLARE_ACCOUNT_ID = cfg.accountId || ''
-      rpcEnv.KIMIFLARE_API_TOKEN = cfg.apiToken || ''
+      rpcEnv.KIMIFLARE_ACCOUNT_ID = cfg.accountId || detected?.accountId || ''
+      rpcEnv.KIMIFLARE_API_TOKEN = cfg.apiToken || detected?.apiToken || ''
     }
 
     this.rpcProc = spawn(process.execPath, [binPath, '--mode', 'rpc'], {
